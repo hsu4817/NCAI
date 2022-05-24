@@ -88,9 +88,39 @@ $ python -m nle.scripts.play --env NetHackScore-v0 # works with random agent too
 $ python -m nle.scripts.play --help
 ```
 
-첫 번째 명령어는 `/nle/scripts/play.py` 파일을 실행한다. 모드를 설정하지 않으면 기본적으로 human으로 되어 있기 때문에, 해당 명령어를 입력하면 사람이 직접 조작하는 넷핵 화면이 시작된다. `--mode` 옵션은 사람이 직접 조작하는 human 옵션과 매턴마다 무작위 action을 실행하는 random 옵션이 있다. 두 번째 명령어와 같이 random 옵션으로 실행하면 무작위로 action을 선택하는 모습을 볼 수 있다. `--env` 옵션은 task를 설정할 수 있다. 기본적으로 `NetHackStaircase-v0`가 설정되어 있고, 아래에서 소개할 다른 task로 변경할 수 있다. `--help` 옵션으로 다른 옵션을 확인할 수 있다.
+첫 번째 명령어는 `/nle/scripts/play.py` 파일을 실행한다. 모드를 설정하지 않으면 기본적으로 human으로 되어 있기 때문에, 해당 명령어를 입력하면 사람이 직접 조작하는 넷핵 화면이 시작된다. `--mode` 옵션은 사람이 직접 조작하는 human 옵션과 매턴마다 무작위 action을 실행하는 random 옵션이 있다. 두 번째 명령어와 같이 random 옵션으로 실행하면 무작위로 action을 선택하는 모습을 볼 수 있다. `--env` 옵션은 task를 설정할 수 있다. 기본적으로 `NetHackScore-v0`가 설정되어 있고, 아래에서 소개할 다른 task로 변경할 수 있다. `--help` 옵션으로 다른 옵션을 확인할 수 있다. 이외 NLE에 대해 알아야 할 내용을 아래에 정리해 두었다.
 
-NLE는 OpenAI Gym을 기반으로 만들어졌기 때문에 각 step마다 observation을 제공한다. 다음은 observation에 있는 중요 요소를 간단히 정리한 표다.
+# About NLE
+
+NLE는 OpenAI Gym을 기반으로 만들어졌기 때문에, 기본적으로 action space와 observation space가 정해져있다. NLE에는 최대 90여개의 action이 존재하지만, NLE에서는 빠르고 안정적인 학습을 위해 기본적으로 23개의 action만을 사용한다. 물론 사용자가 원할 경우 action space를 확장할 수도 있다. 다음은 NLE의 기본 action과 action number를 정리한 표다.
+
+|action number|action|
+|---|---|
+|0|More|
+|1|북쪽으로 한 칸 이동|
+|2|동쪽으로 한 칸 이동|
+|3|남쪽으로 한 칸 이동|
+|4|서쪽으로 한 칸 이동|
+|5|북동쪽으로 한 칸 이동|
+|6|남동쪽으로 한 칸 이동|
+|7|남서쪽으로 한 칸 이동|
+|8|북서쪽으로 한 칸 이동|
+|9|북쪽으로 멀리 이동|
+|10|동쪽으로 멀리 이동|
+|11|남쪽으로 멀리 이동|
+|12|서쪽으로 멀리 이동|
+|13|북동쪽으로 멀리 이동|
+|14|남동쪽으로 멀리 이동|
+|15|남서쪽으로 멀리 이동|
+|16|북서쪽으로 멀리 이동|
+|17|계단 올라가기|
+|18|계단 내려가기|
+|19|한 턴 기다리기|
+|20|발로 차기|
+|21|먹기|
+|22|수색하기|
+
+NLE에서는 각 step 마다 observation을 제공한다. 다음은 NLE의 observation space의 중요 요소를 간단히 정리한 표다.
 
 |요소 이름|요소 정보|범위|크기|
 |---|---|---|---|
@@ -106,6 +136,34 @@ NLE는 OpenAI Gym을 기반으로 만들어졌기 때문에 각 step마다 obser
 |inv_oclasses|인벤토리의 각 요소의 타입을 나타냄|0~18|55|
 |tty_chars|현재 터미널에 출력되는 모든 요소를 아스키 코드로 나타냄|0~255|24×80|
 |tty_colors|현재 터미널에 출력되는 모든 요소의 색상을 나타냄|0~15|24×80|
+
+Observation space 중 blstats는 agent의 상태를 26개의 수치로 나타낸다. 다음은 그 중에서 구현에 참고할만한 중요 요소를 간단히 정리한 표다.
+
+|요소 이름|요소 정보|
+|---|---|
+|0|X 좌표|
+|1|Y 좌표|
+|2|Strength %|
+|3|Strength|
+|4|Dexterity|
+|5|Constitution|
+|6|Intelligence|
+|7|Wisdom|
+|8|Charisma|
+|9|In-game score|
+|10|현재 체력|
+|11|최대 체력|
+|12|던전 깊이|
+|13|골드|
+|14|현재 에너지|
+|15|최대 에너지|
+|16|Armor Class|
+|17|몬스터 레벨|
+|18|경험치 레벨|
+|19|경험치|
+|20|시간|
+|21|배고픔 상태|
+|22|Carrying Capacity|
 
 NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다음은 NLE에서 제공하는 task를 나타낸 표다. 설정된 task를 잘 수행하는 방향으로 action을 선택하여 실행하면 높은 reward가 제공되는 방식이다.
 
