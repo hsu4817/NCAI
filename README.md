@@ -119,7 +119,7 @@ NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다�
 |Score|In-game score를 많이 획득할 수록 높은 reward를 획득한다.|
 |Oracle|넷핵의 게임 요소인 Oracle을 찾으면 reward를 획득한다.|
 
-앞으로의 예제에서는 가장 기본적인 `NetHackStaircase-v0`을 사용하여 강화학습을 구현해 볼 것이다. 여기까지 정독을 완료했다면, 이제 예제를 보며 NLE와 친해지는 시간을 가져보도록 하자.
+앞으로의 예제에서는 가장 기본적인 `NetHackScore-v0`을 사용하여 강화학습을 구현해 볼 것이다. 여기까지 정독을 완료했다면, 이제 예제를 보며 NLE와 친해지는 시간을 가져보도록 하자.
 
 # Reference
 [1] NetHack. 2020. NetHack. https://github.com/NetHack/NetHack/tree/NetHack-3.6.6_PostRelease. (2022).  
