@@ -6,7 +6,7 @@
 # What is NetHack?
 넷핵(NetHack)은 1987년에 처음 발표된 로그라이크 종류의 컴퓨터 게임으로, 1985년 발표된 핵(Hack)의 확장판이다. 아스키 코드로 표현되는 맵에서 캐릭터를 움직여 아이템을 획득하고 적들을 처치하며 던전을 탐험하는 것이 목표인 게임이다. 로그라이크 종류의 게임이 익숙하지 않다면, 최근 인기 있는 로그라이크 종류의 게임인 The Binding of Issac, Vampire Survivors을 떠올리면 어떤 종류의 게임인지 대략적으로 알 수 있을 것이다. 넷핵의 플레이 목표는 Amulet of Yendor를 얻어 신께 제공하여 승천하는 것이다. 플레이어는 이것을 획득하기 위해 캐릭터의 직업, 종족, 성별을 선택하여 던전을 탐험한다. 직업과 종족에 따라 플레이 전략이 크게 달라지기도 한다. 직업과 종족에 대한 자세한 정보는 [넷핵 공식 가이드북](https://github.com/NetHack/NetHack/blob/NetHack-3.6.6_PostRelease/doc/Guidebook.txt)([번역본](https://namu.wiki/w/%EB%84%B7%ED%95%B5/%EA%B0%80%EC%9D%B4%EB%93%9C%EB%B6%81#s-2))에 제공되어 있다.  
 
-<img src="https://s3.us-west-2.amazonaws.com/secure.notion-static.com/5b90d5da-e957-4425-9341-f86e5654ef85/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220519%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220519T065132Z&X-Amz-Expires=86400&X-Amz-Signature=c62ef6264232e5e28c484c7326270fe4337095cbe2462e023923243fed3ec48b&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject"/>
+<img src="./pics/nethack_in_game.png"/>
 
 위 그림은 넷핵 게임 화면의 요소들을 간략하게 설명한 그림이다. 요소들에 대한 자세한 정보는 [넷핵 공식 가이드북](https://github.com/NetHack/NetHack/blob/NetHack-3.6.6_PostRelease/doc/Guidebook.txt)([번역본](https://namu.wiki/w/%EB%84%B7%ED%95%B5/%EA%B0%80%EC%9D%B4%EB%93%9C%EB%B6%81#s-3))에 제공되어 있다.
 - 화면 상단에는 현재 상태를 알려주는 인게임 메시지가 제공된다.
@@ -16,7 +16,7 @@
 로그라이크 게임의 특징 중 하나로 굉장히 높은 자유도와 게임 요소들 간의 수많은 상호작용이 존재한다. 이를 위해 다양한 조작 커맨드가 있는데, 넷핵은 77개의 command action과 16개의 movement action이 있다. 아이템 사용, 특수 행동에 관한 조작법까지는 기억할 필요가 없지만, 던전 탐험, 전투, 장비 관련에 관한 조작법은 기억해 두는 것이 좋다. 조작법에 대한 자세한 정보는 [넷핵 공식 가이드북](https://github.com/NetHack/NetHack/blob/NetHack-3.6.6_PostRelease/doc/Guidebook.txt)([번역본](https://namu.wiki/w/%EB%84%B7%ED%95%B5/%EA%B0%80%EC%9D%B4%EB%93%9C%EB%B6%81#s-4))에 제공되어 있다. 
 
 <p align="center">
-  <img src="https://s3.us-west-2.amazonaws.com/secure.notion-static.com/360db7d8-05f8-4f24-8170-4805ddf1c1be/Untitled.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=AKIAT73L2G45EIPT3X45%2F20220519%2Fus-west-2%2Fs3%2Faws4_request&X-Amz-Date=20220519T070408Z&X-Amz-Expires=86400&X-Amz-Signature=ec6b1f5f9ae927e919de194801e28ea19b99b340eb16c46b4f40c4e1d37622d1&X-Amz-SignedHeaders=host&response-content-disposition=filename%20%3D%22Untitled.png%22&x-id=GetObject" width="60%" height="60%">
+  <img src="./pics/browserhack_in_game.png" width="60%" height="60%">
 </p>
 
 아스키 코드로 나타낸 화면이 불편할 유저들을 위해 아스키 코드를 이미지로 변환한 [BrowserHack](https://coolwanglu.github.io/BrowserHack/)도 존재한다. 게임 화면의 요소와 플레이 방법에 익숙해지기 위해, BrowserHack에서 게임을 직접 플레이 해보자. 
