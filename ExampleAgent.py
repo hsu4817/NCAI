@@ -121,6 +121,16 @@ class ExampleAgent():
             if 'locked' in interp:
                 return True
         return False
+    
+    def asking_direction(self, screen):
+        for line in screen:
+            interp = ''
+            for letter in line:
+                interp += chr(letter)
+            
+            if 'direction?' in interp:
+                return True
+        return False
 
     def preprocess_map(self, obs):
         raise NotImplementedError('Should implement preprocess_map if you need.')

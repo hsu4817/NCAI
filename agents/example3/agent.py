@@ -15,6 +15,22 @@ class Agent(ExampleAgent):
             action = 8
         elif self.is_locked(screen):
             action = 20
+        elif self.asking_direction(screen):
+            original_map = obs['chars'] 
+            
+            north = original_map[y-1][x]
+            east = original_map[y][x+1]
+            south = original_map[y+1][x]
+            west = original_map[y][x-1]
+
+            if north == ord('+'):
+                action = 1
+            elif east == ord('+'):
+                action = 2
+            elif south == ord('+'):
+                action = 3
+            elif west == ord('+'):
+                action = 4
         else:
             pre_map = self.preprocess_map(obs)
 
@@ -48,13 +64,13 @@ class Agent(ExampleAgent):
                 char = chars[y][x]
                 color = colors[y][x]
                 
-                pre_char = True #pre_char이 True면 해당 좌표에 이동할 수 있다는 뜻.
+                pre_char = True #pre_char이 True면 해당 좌표에 이동할 수 있다.
                 if char in unavailable:
                     pre_char = False #공백과 바위가 있는 곳으로는 이동할 수 없다.
                 elif char in door_or_wall and color == 7:
                     pre_char = False #해당 좌표의 문자가 회색(color == 7) | 혹은 -라면 벽이므로 이동할 수 없다.
                 elif char == ord('#') and color == 6:
-                    pre_char = False # bar의 경우.
+                    pre_char = False # bar의 경우 이동할 수 없다.
                 pre_line.append(pre_char)
             pre_map.append(pre_line)
         return pre_map

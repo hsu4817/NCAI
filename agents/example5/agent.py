@@ -13,8 +13,8 @@ class Agent(ExampleAgent):
         super().__init__(FLAGS)
 
         self.buffer_size = 10000
-        self.batch_size = 32
-        self.gamma = 0.999
+        self.batch_size = 64
+        self.gamma = 0.99
 
         self.policy = DQN()
         self.target = DQN()
@@ -74,13 +74,13 @@ class Agent(ExampleAgent):
         return action.item()
     
     def optimize_td_loss(self):
-        glyphs, stats, actions, rewards, next_glyphs, next_stats, dones = self.buffer.sample(self.batch_size)
+        glyphs, stats, next_glyphs, next_stats, actions, rewards, dones = self.buffer.sample(self.batch_size)
         glyphs = torch.from_numpy(glyphs).float()
         stats = torch.from_numpy(stats).float()
-        actions = torch.from_numpy(actions).long()
-        rewards = torch.from_numpy(rewards).float()
         next_glyphs = torch.from_numpy(next_glyphs).float()
         next_stats = torch.from_numpy(next_stats).float()
+        actions = torch.from_numpy(actions).long()
+        rewards = torch.from_numpy(rewards).float()
         dones = torch.from_numpy(dones).float()
 
         with torch.no_grad():
@@ -103,7 +103,6 @@ class Agent(ExampleAgent):
     def train(self, env):
         episode_rewards = [0.0]
         average_rewards = []
-        high_score = -float('inf')
         losses = []
 
         obs = env.reset()
@@ -111,7 +110,7 @@ class Agent(ExampleAgent):
             pre_map = self.preprocess_map(obs)
             pre_stat = self.preprocess_stat(obs)
             
-            eps_threshold = math.exp(-time_step)
+            eps_threshold = math.exp(-time_step/100000)
             if random.random() <= eps_threshold:
                 action = env.action_space.sample()
             else:
@@ -121,41 +120,36 @@ class Agent(ExampleAgent):
 
             episode_rewards[-1] += reward
 
-            high_score = max(obs['blstats'][9], high_score)
-
             if done:
                 obs = env.reset()
-                episode_rewards.append(-1.0)
             else:
                 new_pre_map = self.preprocess_map(new_obs)
                 new_pre_stat = self.preprocess_stat(new_obs)
                 self.buffer.push(pre_map,
                                 pre_stat,
-                                action,
-                                reward,
                                 new_pre_map,
                                 new_pre_stat,
+                                action,
+                                reward,
                                 float(done))
                 obs = new_obs
-                high_score = max(obs['blstats'][9], high_score)
             
-            if time_step > 100:
+            if time_step > 1000:
                 loss = self.optimize_td_loss()
                 losses.append(loss)
 
-            if time_step > 100 and time_step % 10 == 0:
+            if time_step > 1000 and time_step % 1000 == 0:
                 self.target.load_state_dict(self.policy.state_dict())
                 torch.save(self.policy.state_dict(), self.path)
             
             if done:
                 num_episodes = len(episode_rewards)
-                mean_100ep_reward = round(np.mean(episode_rewards[-5:-1]), 1)
                 print("********************************************************")
                 print("Average loss: {}".format(np.array(losses).mean()))
                 print("steps: {}".format(time_step))
                 print("episodes: {}".format(num_episodes))
-                print("mean 5 episode reward: {}".format(mean_100ep_reward))
-                print("current high score: {}".format(high_score))
+                print("reward: {}".format(episode_rewards[-1]))
                 print("% time spent exploring: {}".format(int(100 * eps_threshold)))
                 print("********************************************************")
+                episode_rewards.append(0.0)
                 losses = []

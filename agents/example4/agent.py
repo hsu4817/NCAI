@@ -35,6 +35,22 @@ class Agent(ExampleAgent):
             action = 8
         elif self.is_locked(screen):
             action = 20
+        elif self.asking_direction(screen):
+            original_map = obs['chars'] 
+            
+            north = original_map[y-1][x]
+            east = original_map[y][x+1]
+            south = original_map[y+1][x]
+            west = original_map[y][x-1]
+
+            if north == ord('+'):
+                action = 1
+            elif east == ord('+'):
+                action = 2
+            elif south == ord('+'):
+                action = 3
+            elif west == ord('+'):
+                action = 4
         elif (y, x) == self.goal:
             action = 18
         else:
@@ -44,7 +60,7 @@ class Agent(ExampleAgent):
             if self.children[y][x] == None:
                 py, px = None, None
                 if self.parent[y][x] != None:
-                    dxy_i = self.parent[y][x] - 1
+                    dxy_i = self.parent[y][x] - 1 #부모 노드가 있다면 부모 노드의 위치 기억
                     py = y + self.dxy[dxy_i][0]
                     px = x + self.dxy[dxy_i][1]
                 
@@ -53,26 +69,26 @@ class Agent(ExampleAgent):
                     ny = y + self.dxy[i][0]
                     nx = x + self.dxy[i][1]
 
-                    if ny < 0 or ny >= 21 or nx < 0 or nx >= 79:
-                        is_child = False
-                    else:
-                        is_child = pre_map[ny][nx] and (ny, nx) != (py, px) and not self.visited[ny][nx]
+                    #범위 안이면서, 이동 가능하면서, 부모 노드가 아니고, 방문하지 않았다면 자식 노드
+                    is_child = (0 <= ny < 21 and 0 <= nx < 79) and pre_map[ny][nx] and (ny, nx) != (py, px) and not self.visited[ny][nx]
                     children_list.append(is_child)
+
+                    #자식 노드에 부모 노드에 대한 정보 추가
                     if is_child:
                         self.parent[ny][nx] = (i+2)%4 + 1
                 
+                #해당 좌표에 자식 리스트 추가
                 self.children[y][x] = children_list
             
             for i in range(4):
                 ny = y + self.dxy[i][0]
                 nx = x + self.dxy[i][1]
-                if ny < 0 or ny >= 21 or nx < 0 or nx >= 79:
-                    continue
-                if self.children[y][x][i] and not self.visited[ny][nx]:
+                if (0 <= ny < 21 and 0 <= nx < 79) and self.children[y][x][i] and not self.visited[ny][nx]:
                     action = i+1
                     return action
             action = self.parent[y][x]
 
+        #더 이상 탐색할 곳이 없다면 계단 올라가기
         if action == None:
             action = 17
 
@@ -99,7 +115,7 @@ class Agent(ExampleAgent):
                 elif char in door_or_wall and color == 7:
                     pre_char = False
                 elif char == ord('#') and color == 6:
-                    pre_char = False # bar의 경우.
+                    pre_char = False
                 elif char == ord('>'):
                     self.goal = (y, x)
                 pre_line.append(pre_char)

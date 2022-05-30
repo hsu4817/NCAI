@@ -12,34 +12,35 @@ class ReplayBuffer():
     def __len__(self):
         return len(self.buffer)
 
-    def push(self, glyph, stat, action, reward, next_glyph, next_stat, done):
-        self.buffer.append((glyph, stat, action, reward, next_glyph, next_stat, done))
+    def push(self, glyph, stat, next_glyph, next_stat, action, reward, done):
+        self.buffer.append((glyph, stat, next_glyph, next_stat, action, reward, done))
 
     def sample(self, size):
-        glyphs, stats, actions, rewards, next_glyphs, next_stats, dones = [], [], [], [], [], [], []
+        glyphs, stats, next_glyphs, next_stats, actions, rewards, dones = [], [], [], [], [], [], []
         
         indices = np.random.randint(0, len(self.buffer) - 1, size=size)
         for i in indices:
             data = self.buffer[i]
-            glyph, stat, action, reward, next_glyph, next_stat, done = data
+            glyph, stat, next_glyph, next_stat, action, reward, done = data
             glyphs.append(np.array(glyph, copy=False))
             stats.append(np.array(stat, copy=False))
-            actions.append(action)
-            rewards.append(reward)
             next_glyphs.append(np.array(next_glyph, copy=False))
             next_stats.append(np.array(next_stat, copy=False))
+            actions.append(action)
+            rewards.append(reward)
             dones.append(done)
         
         return (
             np.array(glyphs),
             np.array(stats),
-            np.array(actions),
-            np.array(rewards),
             np.array(next_glyphs),
             np.array(next_stats),
+            np.array(actions),
+            np.array(rewards),
             np.array(dones),
         )
 
+#Referenced from NLE https://github.com/facebookresearch/nle/blob/main/nle/agent/agent.py
 class Crop(nn.Module):
     def __init__(self, height, width, height_target, width_target):
         super(Crop, self).__init__()
@@ -85,34 +86,36 @@ class Crop(nn.Module):
         )
 
 class DQN(nn.Module):
-    def __init__(self, embedding_dim=32, crop_dim=15, final_layer_dims=512):
+    def __init__(self, crop_dim=15, final_layer_dims=512):
         super(DQN, self).__init__()
 
         self.glyph_shape = (21, 79)
         self.num_actions = 23
         self.h = self.glyph_shape[0]
         self.w = self.glyph_shape[1]
-        self.k_dim = embedding_dim
+
         self.glyph_crop = Crop(self.h, self.w, crop_dim, crop_dim)
-        self.features = nn.Sequential(
+        
+        self.cnn = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, stride=1),
             nn.ReLU(),
             nn.Conv2d(16, 32, kernel_size=3, stride=1),
             nn.ReLU(),
-            nn.Dropout(0.5)
         )
+        
         self.glyph_flatten = nn.Flatten()
-        self.final_linear_1 = nn.Linear(in_features=3872,
-                                        out_features=final_layer_dims)
-        self.output_linear = nn.Linear(in_features=final_layer_dims,
-                                       out_features=self.num_actions)
+        
+        self.fc1 = nn.Sequential(
+            nn.Linear(in_features=32*11*11, out_features=final_layer_dims),
+            nn.ReLU(),
+        )
+        self.fc2 = nn.Linear(in_features=final_layer_dims, out_features=self.num_actions)
 
     def forward(self, observed_glyphs, observed_stats):
         coordinates = observed_stats[:, :2]
         x_glyphs = self.glyph_crop(observed_glyphs, coordinates).unsqueeze(1).float()
-        x_glyphs = self.features(x_glyphs)
+        x_glyphs = self.cnn(x_glyphs)
         x_glyphs = self.glyph_flatten(x_glyphs)
-        x = self.final_linear_1(x_glyphs)
-        x = F.relu(x)
-        x = self.output_linear(x)
+        x = self.fc1(x_glyphs)
+        x = self.fc2(x)
         return x
