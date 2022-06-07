@@ -14,9 +14,11 @@ DQN은 기존의 Q-Learning 알고리즘을 신경망으로 바꾼 것이다. Q-
 
 <img src="../../pics/dqn_model.png"/>
 
-```dqn.py```에는 experience replay buffer와 DQN 모델이 구현되어 있다. Experience replay buffer에는 전처리 과정을 거친 현재 상태의 맵의 정보와 agent의 blstat, 현재 상태에서 선택한 action, 그에 대한 reward, 종료 여부, 전처리 과정을 거친 다음 상태의 맵의 정보와 agent의 blstat 정보가 저장된다. Experience replay buffer의 자료구조로 deque를 사용하는데, deque은 double ended queue의 약자로 처음과 끝이 모두 열려있는 큐 형태를 의미한다. 이러한 형태 덕분에 처음과 끝에 새로운 요소를 추가하거나 기존의 요소를 삭제하는 것이 기존의 자료구조에 비해 월등히 빠르다는 장점이 있다. DQN 모델은 NLE 논문의 모델을 일부 참고하여 작성하였다. 현재 맵을 모두 사용하는 것이 아닌, agent의 현재 위치 주위의 일정 부분만 잘라서 입력으로 사용하도록 하였다. 입력 받은 observation은 Convolutional Neural Network(CNN)과 Fully Connected Network(FC layer)를 통과하여 출력을 내놓는다. 이러한 모델의 구조는 자유롭게 수정하여 사용하여도 좋다.
+```dqn.py```에는 experience replay buffer와 DQN 모델이 구현되어 있다. Experience replay buffer에는 전처리 과정을 거친 현재 state의 맵의 정보와 agent의 blstat, 현재 state에서 선택한 action, 그에 대한 reward, 종료 여부, 전처리 과정을 거친 다음 state의 맵의 정보와 agent의 blstat 정보가 저장된다. Experience replay buffer의 자료구조로 deque를 사용하는데, deque은 double ended queue의 약자로 처음과 끝이 모두 열려있는 큐 형태를 의미한다. 이러한 형태 덕분에 처음과 끝에 새로운 요소를 추가하거나 기존의 요소를 삭제하는 것이 기존의 자료구조에 비해 월등히 빠르다는 장점이 있다. DQN 모델은 NLE 논문의 모델을 일부 참고하여 작성하였다. 현재 맵을 모두 사용하는 것이 아닌, agent의 현재 위치 주위의 일정 부분만 잘라서 입력으로 사용하도록 하였다. 입력 받은 observation은 Convolutional Neural Network(CNN)과 Fully Connected Network(FC layer)를 통과하여 출력을 내놓는다. 이러한 모델의 구조는 자유롭게 수정하여 사용하여도 좋다.
 
 ```agent.py```에는 학습에 관한 함수들이 정의되어 있다. ```preprocess_map``` 함수와 ```preprocess_stat``` 함수는 각각 맵 정보와 agent의 blstat에 대한 전처리를 진행하는 함수이다. ```optimize_td_loss``` 함수는 loss 계산 및 optimizer step을 진행하는 함수이다. ```train``` 함수는 앞서 소개한 함수들을 사용하여 신경망 학습을 진행하는 함수다. 마지막으로 ```get_action``` 함수는 학습된 신경망으로부터 action을 선택하는 함수다.
+
+DQN 기반의 강화학습을 더 심도있게 구현하고 싶다면, rainbow의 구현 방법을 공부해 보도록 하자. Rainbow는 Double DQN, prioritized experience replay, dueling network architecture, multi-step bootsrap targets, distributional q-learning, noisy DQN의 여섯 가지 최신 DQN 기법을 모두 적용한 모델이다.
 
 이 예제를 실행하려면 우선 다음 명령어를 터미널에 입력하여 학습을 통해 policy.pt 파일을 생성해야 한다.
 

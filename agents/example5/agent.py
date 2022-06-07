@@ -12,7 +12,7 @@ class Agent(ExampleAgent):
     def __init__(self, FLAGS):
         super().__init__(FLAGS)
 
-        self.buffer_size = 10000
+        self.buffer_size = 5000
         self.batch_size = 64
         self.gamma = 0.99
 
@@ -110,7 +110,7 @@ class Agent(ExampleAgent):
             pre_map = self.preprocess_map(obs)
             pre_stat = self.preprocess_stat(obs)
             
-            eps_threshold = math.exp(-time_step/100000)
+            eps_threshold = math.exp(-len(episode_rewards)/50)
             if random.random() <= eps_threshold:
                 action = env.action_space.sample()
             else:
@@ -146,10 +146,9 @@ class Agent(ExampleAgent):
                 num_episodes = len(episode_rewards)
                 print("********************************************************")
                 print("Average loss: {}".format(np.array(losses).mean()))
-                print("steps: {}".format(time_step))
-                print("episodes: {}".format(num_episodes))
-                print("reward: {}".format(episode_rewards[-1]))
-                print("% time spent exploring: {}".format(int(100 * eps_threshold)))
+                print("Total Steps: {}".format(time_step))
+                print("Episodes: {}".format(num_episodes))
+                print("Reward: {}".format(episode_rewards[-1]))
                 print("********************************************************")
                 episode_rewards.append(0.0)
                 losses = []

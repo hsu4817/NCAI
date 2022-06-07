@@ -1,7 +1,9 @@
-# Introduction
+# Index
 - [What is NetHack?](#what-is-nethack)
 - [What is NetHack Learning Environment?](#what-is-nethack-learning-environment)
 - [About NLE](#about-nle)
+- [Appendix](#appendix)
+- [Reference](#reference)
 
 # What is NetHack?
 넷핵(NetHack)은 1987년에 처음 발표된 로그라이크 종류의 컴퓨터 게임으로, 1985년 발표된 핵(Hack)의 확장판이다. 아스키 코드로 표현되는 맵에서 캐릭터를 움직여 아이템을 획득하고 적들을 처치하며 던전을 탐험하는 것이 목표인 게임이다. 로그라이크 종류의 게임이 익숙하지 않다면, 최근 인기 있는 로그라이크 종류의 게임인 The Binding of Issac, Vampire Survivors을 떠올리면 어떤 종류의 게임인지 대략적으로 알 수 있을 것이다. 넷핵의 플레이 목표는 Amulet of Yendor를 얻어 신께 제공하여 승천하는 것이다. 플레이어는 이것을 획득하기 위해 캐릭터의 직업, 종족, 성별을 선택하여 던전을 탐험한다. 직업과 종족에 따라 플레이 전략이 크게 달라지기도 한다. 직업과 종족에 대한 자세한 정보는 [넷핵 공식 가이드북](https://github.com/NetHack/NetHack/blob/NetHack-3.6.6_PostRelease/doc/Guidebook.txt)([번역본](https://namu.wiki/w/%EB%84%B7%ED%95%B5/%EA%B0%80%EC%9D%B4%EB%93%9C%EB%B6%81#s-2))에 제공되어 있다.  
@@ -180,8 +182,62 @@ NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다�
 
 앞으로의 예제에서는 가장 기본적인 `NetHackScore-v0`을 사용하여 강화학습을 구현해 볼 것이다. 여기까지 정독을 완료했다면, 이제 예제를 보며 NLE와 친해지는 시간을 가져보도록 하자.
 
+# Appendix
+
+작성한 모델의 성능을 알아보기 위해 loss, reward 등 성능과 관련된 값들의 추이를 확인하고 싶을 때가 있을 것이다. print를 사용하여 값들을 직접 확인하는 것도 좋지만, 그래프를 통해 직관적으로 파악하고 싶다면 TensorBoard를 사용하는 것이 좋다. NLE는 PyTorch를 기반으로 작동되는 라이브러리이기 때문에, PyTorch에서 TensorBoard를 사용하는 방법을 알아보도록 하자.
+
+``` python
+import torch
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
+```
+
+PyTorch로 Tensorboard를 사용하기 위해서는, 먼저 ```SummaryWriter``` 인스턴스를 생성해야 한다. 우리의 환경에서 Writer는 기본적으로 ```~/NCF2022/runs/``` 디렉토리에 데이터를 저장할 것이다. 다음으로 필요한 값을 기록하려면 ```add_scalar(tag, scalar_value, global_step=None, walltime=None)```함수를 사용해야 한다. 다음 예시는 간단한 linear regression 모델을 만들고 ```add_scalar``` 를 사용해 loss 값을 기록하는 것을 보여준다.
+
+``` python
+x = torch.arange(-5, 5, 0.1).view(-1, 1)
+y = -5 * x + 0.1 * torch.randn(x.size())
+
+model = torch.nn.Linear(1, 1)
+criterion = torch.nn.MSELoss()
+optimizer = torch.optim.SGD(model.parameters(), lr = 0.1)
+
+def train_model(iter):
+    for epoch in range(iter):
+        y1 = model(x)
+        loss = criterion(y1, y)
+        writer.add_scalar("Loss/train", loss, epoch)
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+train_model(10)
+writer.flush()
+```
+
+모든 보류중인(pending) 이벤트가 디스크에 기록되었는지 확인하려면 ```flush``` 함수를 호출하면 된다. 기록할 수 있는 더 많은 TensorBoard 시각화 방법을 찾으려면 [torch.utils.tensorboard tutorials](https://pytorch.org/docs/stable/tensorboard.html)을 참조하라. Summary writer가 더 이상 필요하지 않으면 ```close``` 함수를 호출한다.
+
+``` python
+writer.close()
+```
+
+TensorBoard를 실행하기 위해서는, 우선 TensorBoard를 설치하도록 한다. 이때 conda 가상환경 내에서 설치하는 것을 권장한다.
+
+``` bash
+(nle) ~/NCF2022$ pip install tensorboard
+```
+
+TensorBoard는 .*tfevents.* 파일을 찾기 위해 logdir의 인자로 받은 디렉터리 구조를 재귀적으로 탐색한다. NCF2022 디렉토리에서 다음 명령어를 입력하자.
+
+``` bash
+(nle) ~/NCF2022$ tensorboard --logdir=runs
+```
+
+이제 [http://localhost:6006](http://localhost:6006)으로 이동하여 시각화된 데이터를 확인할 수 있다.
+
 # Reference
 [1] NetHack. 2020. NetHack. https://github.com/NetHack/NetHack/tree/NetHack-3.6.6_PostRelease. (2022).  
 [2] facebookresearch. 2022. nle. https://github.com/facebookresearch/nle. (2022).  
 [3] coolwanglu. 2018. BrowserHack. https://github.com/coolwanglu/BrowserHack. (2022).  
 [4] [Küttler, Heinrich, et al. “The NetHack Learning Environment” arXiv preprint arXiv:2006.13760 (2020)](https://arxiv.org/abs/2006.13760)  
+[5] [PYTORCH로 TENSORBOARD 사용하기](https://tutorials.pytorch.kr/recipes/recipes/tensorboard_with_pytorch.html)

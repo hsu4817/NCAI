@@ -2,43 +2,8 @@ import numpy as np
 import torch
 from torch import nn
 from torch.nn import functional as F
+from torch.distributions import Categorical
 from nle import nethack
-from collections import deque
-
-class ReplayBuffer():
-    def __init__(self, size):
-        self.buffer = deque([], maxlen=size)
-
-    def __len__(self):
-        return len(self.buffer)
-
-    def push(self, glyph, stat, next_glyph, next_stat, action, reward, done):
-        self.buffer.append((glyph, stat, next_glyph, next_stat, action, reward, done))
-
-    def sample(self, size):
-        glyphs, stats, next_glyphs, next_stats, actions, rewards, dones = [], [], [], [], [], [], []
-        
-        indices = np.random.randint(0, len(self.buffer) - 1, size=size)
-        for i in indices:
-            data = self.buffer[i]
-            glyph, stat, next_glyph, next_stat, action, reward, done = data
-            glyphs.append(np.array(glyph, copy=False))
-            stats.append(np.array(stat, copy=False))
-            next_glyphs.append(np.array(next_glyph, copy=False))
-            next_stats.append(np.array(next_stat, copy=False))
-            actions.append(action)
-            rewards.append(reward)
-            dones.append(done)
-        
-        return (
-            np.array(glyphs),
-            np.array(stats),
-            np.array(next_glyphs),
-            np.array(next_stats),
-            np.array(actions),
-            np.array(rewards),
-            np.array(dones),
-        )
 
 #Referenced from NLE https://github.com/facebookresearch/nle/blob/main/nle/agent/agent.py
 class Crop(nn.Module):
@@ -85,9 +50,9 @@ class Crop(nn.Module):
                 .long()
         )
 
-class DQN(nn.Module):
+class A2C(nn.Module):
     def __init__(self, crop_dim=15, final_layer_dims=512):
-        super(DQN, self).__init__()
+        super(A2C, self).__init__()
 
         self.glyph_shape = (21, 79)
         self.num_actions = 23
@@ -98,25 +63,30 @@ class DQN(nn.Module):
         
         self.cnn = nn.Sequential(
             nn.Conv2d(1, 16, kernel_size=3, stride=1),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.Conv2d(16, 32, kernel_size=3, stride=1),
-            nn.ReLU(),
+            nn.Tanh(),
             nn.AvgPool2d(kernel_size=3, stride=1)
         )
         
         self.glyph_flatten = nn.Flatten()
         
-        self.fc1 = nn.Sequential(
+        self.fc = nn.Sequential(
             nn.Linear(in_features=32*9*9, out_features=final_layer_dims),
-            nn.ReLU(),
+            nn.Tanh(),
         )
-        self.fc2 = nn.Linear(in_features=final_layer_dims, out_features=self.num_actions)
+
+        self.actor = nn.Linear(in_features=final_layer_dims, out_features=self.num_actions)
+        self.critic = nn.Linear(in_features=final_layer_dims, out_features=1)
 
     def forward(self, observed_glyphs, observed_stats):
         coordinates = observed_stats[:, :2]
         x_glyphs = self.glyph_crop(observed_glyphs, coordinates).unsqueeze(1).float()
         x_glyphs = self.cnn(x_glyphs)
         x_glyphs = self.glyph_flatten(x_glyphs)
-        x = self.fc1(x_glyphs)
-        x = self.fc2(x)
-        return x
+        x = self.fc(x_glyphs)
+        
+        actor = Categorical(logits=self.actor(x))
+        critic = self.critic(x)
+        
+        return actor, critic
