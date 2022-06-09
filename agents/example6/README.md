@@ -10,7 +10,7 @@ Actor-Critic의 Neural Network는 현재 state를 입력 받아 각 action을 �
 
 ```a2c.py```에는 A2C 모델이 구현되어 있다. 이해를 쉽게 하기 위해 이전 예제에서 사용한 CNN과 FC Layer 구조를 거의 그대로 사용하였다. ```forward``` 함수에서 actor, critic을 반환하는데, 이는 앞에서 설명했듯이 각각 actor network와 critic network를 의미한다. ```torch.distributions```에서 가져온 ```Categorical``` 함수는 입력값을 확률밀도함수 형태로 나타내주는 함수다.
 
-```agent.py```에는 이전 예제와 마찬가지로 학습에 관한 함수들이 정의되어 있다. 여기서도 역시 이해를 쉽게 하기 위해 이전 예제에서 사용한 전처리 과정 등을 그대로 사용하였다. 하지만 이전 예제와 다르게 한 가지 주의할 점은, 모델에서 첫 번째 인자로 반환되는 값이 확률밀도함수 형태기 때문에 ```sample``` 함수를 사용하여 action을 선택하고, 이후 필요에 맞추어 ```unsqueeze```, ```squeeze``` 등을 적절히 활용해야 한다. 각 에피소드가 끝난 후에는 매 step마다 저장된 log probability, critic, reward, done, entropy 정보를 이용하여 loss를 계산하여 학습을 진행한다. 일반적인 A2C 알고리즘에는 entropy의 개념이 없는데, 이는 OpenAI Baseline의 A2C 구현에서 기존 A2C 알고리즘이 training 과정이 불안하고 overfitting이 쉽게 일어난다는 문제점을 해결하기 위해 제시한 방법 중 하나이다. Policy distribution의 entropy를 loss에 추가하여 action의 다양성을 유지해주기 위해 노력하는 것으로 생각할 수 있다.
+```agent.py```에는 이전 예제와 마찬가지로 학습에 관한 함수들이 정의되어 있다. 여기서도 역시 이해를 쉽게 하기 위해 이전 예제에서 사용한 전처리 과정 등을 그대로 사용하였다. 하지만 이전 예제와 다르게 한 가지 주의할 점은, 모델에서 첫 번째 인자로 반환되는 값이 확률밀도함수 형태기 때문에 ```sample``` 함수를 사용하여 action을 선택하고, 이후 필요에 맞추어 ```unsqueeze```, ```squeeze``` 등을 적절히 활용해야 한다. 각 에피소드가 끝난 후에는 매 step마다 저장된 log probability, critic, reward, done, entropy 정보를 이용하여 loss를 계산하여 학습을 진행한다. 학습에서는 학습의 안정화를 위해 gradient clipping을 적용하였다. 또한 일반적인 A2C 알고리즘에는 entropy의 개념이 없는데, 이는 OpenAI Baseline의 A2C 구현에서 기존 A2C 알고리즘이 training 과정이 불안하고 overfitting이 쉽게 일어난다는 문제점을 해결하기 위해 제시한 방법 중 하나이다. Policy distribution의 entropy를 loss에 추가하여 action의 다양성을 유지해주기 위해 노력하는 것으로 생각할 수 있다.
 
 DQN은 experience replay를 사용함으로써 데이터 간의 독립성을 보장하였지만, A2C는 탐색 데이터를 바로 학습에 이용하기 때문에 잘못된 길로 학습했을 경우 결과가 좋지 않을 수 있다. 이러한 문제를 해결하기 위해 한 번에 비동기적으로 여러 개의 agent를 학습하는 Asynchronous Advantage Actor-Critic(이하 A3C)가 있다. 이외에도 A2C의 policy update 과정에서 성능이 악화되지 않도록 알고리즘을 개선한 Trust Region Policy Optimization(이하 TRPO), 성능은 좋지만 복잡하다는 단점을 가진 TPRO을 조금 더 간단하게 만든 Proximal Policy Optimization(이하 PPO) 등의 최신 Actor-Critic 알고리즘들이 존재한다.
 
@@ -23,5 +23,5 @@ DQN은 experience replay를 사용함으로써 데이터 간의 독립성을 보
 학습 후 폴더 내에 policy.pt 파일이 생성되었다면, 다음 명령어를 터미널에 입력하여 실행할 수 있다.
 
 ```
-(nle) ~/NCF2022$ python run.py --example agents.example5
+(nle) ~/NCF2022$ python run.py --example agents.example6
 ```

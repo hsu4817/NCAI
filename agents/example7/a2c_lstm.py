@@ -50,9 +50,9 @@ class Crop(nn.Module):
                 .long()
         )
 
-class A2C(nn.Module):
-    def __init__(self, crop_dim=15, final_layer_dims=512):
-        super(A2C, self).__init__()
+class A2C_LSTM(nn.Module):
+    def __init__(self, crop_dim=15, final_layer_dims=256):
+        super(A2C_LSTM, self).__init__()
 
         self.glyph_shape = (21, 79)
         self.num_actions = 23
@@ -78,14 +78,19 @@ class A2C(nn.Module):
         self.actor = nn.Linear(in_features=final_layer_dims, out_features=self.num_actions)
         self.critic = nn.Linear(in_features=final_layer_dims, out_features=1)
 
-    def forward(self, observed_glyphs, observed_stats):
+        self.lstm = nn.LSTMCell(final_layer_dims, final_layer_dims)
+
+    def forward(self, observed_glyphs, observed_stats, hx, cx):
         coordinates = observed_stats[:, :2]
         x_glyphs = self.glyph_crop(observed_glyphs, coordinates).unsqueeze(1).float()
         x_glyphs = self.cnn(x_glyphs)
         x_glyphs = self.glyph_flatten(x_glyphs)
         x = self.fc(x_glyphs)
         
+        hx, cx = self.lstm(x, (hx, cx))
+        x = hx
+
         actor = Categorical(logits=self.actor(x))
         critic = self.critic(x)
         
-        return actor, critic
+        return actor, critic, hx, cx
