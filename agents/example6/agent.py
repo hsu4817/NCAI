@@ -8,9 +8,6 @@ import math
 from ExampleAgent import ExampleAgent
 from .a2c import A2C
 
-from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter()
-
 class Agent(ExampleAgent):
     def __init__(self, FLAGS):
         super().__init__(FLAGS)
@@ -146,8 +143,6 @@ class Agent(ExampleAgent):
                 print("Episodes: {}".format(num_episodes))
                 print("Reward: {}".format(episode_rewards[-1]))
                 print("********************************************************")
-                writer.add_scalar('loss/train', loss, num_episodes)
-                writer.add_scalar('reward/train', episode_rewards[-1], num_episodes)
                 episode_rewards.append(0.0)
                 log_probs, critics, rewards, dones, entropies = [], [], [], [], []
                 

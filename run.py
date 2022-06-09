@@ -41,10 +41,10 @@ def play():
 def main():
     parser = argparse.ArgumentParser(description="NLE Play tool.")
     parser.add_argument(
-        "--example",
+        "--run",
         type=str,
         default="agents.example1",
-        help="Select example. Defaults to example1.",
+        help="Select what to run. Defaults to example1.",
     )
     parser.add_argument(
         "-e",
@@ -86,9 +86,9 @@ def main():
     parser.add_argument(
         "--mode",
         type=str,
-        default="run",
-        choices=["run", "train"],
-        help="Run or train. Defaults to 'run'",
+        default="test",
+        choices=["test", "train"],
+        help="Test or train. Defaults to 'test'",
     )
 
     global FLAGS

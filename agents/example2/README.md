@@ -23,5 +23,5 @@ agent가 게임을 진행하다 잠긴 문을 만났다. 이때 다른 길로 �
 이 예제를 실행하려면 다음 명령어를 터미널에서 입력하도록 하자.
 
 ```
-(nle) ~/NCF2022$ python run.py --example agents.example2
+(nle) ~/NCF2022$ python run.py --run agents.example2
 ```
