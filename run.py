@@ -35,7 +35,7 @@ def play():
     agent = getattr(importlib.import_module(module), name)(FLAGS)
     if FLAGS.mode == 'train':
         agent.train(env)
-    elif FLAGS.mode == 'run':
+    elif FLAGS.mode == 'test':
         agent.run_episodes(env)
 
 def main():
