@@ -30,7 +30,7 @@ def play():
         allow_all_modes=True,
     )
 
-    module = FLAGS.example + ".agent"
+    module = FLAGS.run + ".agent"
     name = "Agent"
     agent = getattr(importlib.import_module(module), name)(FLAGS)
     if FLAGS.mode == 'train':
