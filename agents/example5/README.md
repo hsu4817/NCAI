@@ -18,7 +18,7 @@ DQN은 기존의 Q-Learning 알고리즘을 신경망으로 바꾼 것이다. Q-
 
 ```agent.py```에는 학습에 관한 함수들이 정의되어 있다. ```preprocess_map``` 함수와 ```preprocess_stat``` 함수는 각각 맵 정보와 agent의 blstat에 대한 전처리를 진행하는 함수이다. ```optimize_td_loss``` 함수는 loss 계산 및 optimizer step을 진행하는 함수이다. ```train``` 함수는 앞서 소개한 함수들을 사용하여 신경망 학습을 진행하는 함수다. 마지막으로 ```get_action``` 함수는 학습된 신경망으로부터 action을 선택하는 함수다.
 
-DQN 기반의 강화학습을 더 심도있게 구현하고 싶다면, rainbow의 구현 방법을 공부해 보도록 하자. Rainbow는 Double DQN, prioritized experience replay, dueling network architecture, multi-step bootsrap targets, distributional q-learning, noisy DQN의 여섯 가지 최신 DQN 기법을 모두 적용한 모델이다.
+이번 예제와 같이 기본적인 DQN은 NLE에서 좋은 성능을 보이지 못한다. 따라서 DQN 기반의 강화학습을 더 심도있게 구현하고 싶다면, [rainbow](https://arxiv.org/pdf/1710.02298.pdf)의 구현 방법을 공부해 보도록 하자. Rainbow는 Double DQN, prioritized experience replay, dueling network architecture, multi-step bootsrap targets, distributional q-learning, noisy DQN의 여섯 가지 최신 DQN 기법을 모두 적용한 모델이다.
 
 이 예제를 실행하려면 우선 다음 명령어를 터미널에 입력하여 학습을 통해 policy.pt 파일을 생성해야 한다.
 

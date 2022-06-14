@@ -12,12 +12,18 @@ class Agent(ExampleAgent):
         self.visited = [[False for _ in range(79)] for _ in range(21)]
         self.goal = (None, None)
         self.dungeon_lv = 1
+
+        self.last_pos = None
+        self.frozen_cnt = 0
     
     def new_lv(self):
         self.parent = [[None for _ in range(79)] for _ in range(21)]
         self.children = [[None for _ in range(79)] for _ in range(21)]
         self.visited = [[False for _ in range(79)] for _ in range(21)]
         self.goal = (None, None)
+
+        self.last_pos = None
+        self.frozen_cnt = 0
 
     def get_action(self, env, obs):
         cur_lv = obs['blstats'][12]
@@ -28,6 +34,19 @@ class Agent(ExampleAgent):
 
         x, y = obs['blstats'][:2]
         screen = obs['tty_chars']
+
+        action = None
+            
+        if self.last_pos == (x, y):
+            self.frozen_cnt += 1
+            if self.frozen_cnt > 10:
+                self.frozen_cnt = 0
+                action = env.action_space.sample()
+                
+                return action
+        else:
+            self.frozen_cnt = 0
+        self.last_pos = (x, y)
 
         if self.is_more(screen):
             action = 0
