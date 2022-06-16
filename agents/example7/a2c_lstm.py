@@ -51,46 +51,127 @@ class Crop(nn.Module):
         )
 
 class A2C_LSTM(nn.Module):
-    def __init__(self, crop_dim=15, final_layer_dims=256):
+    def __init__(self, embedding_dim=32, crop_dim=9, num_layers=5):
         super(A2C_LSTM, self).__init__()
 
         self.glyph_shape = (21, 79)
+        self.blstats_shape = 26
         self.num_actions = 23
         self.h = self.glyph_shape[0]
         self.w = self.glyph_shape[1]
+        self.k_dim = embedding_dim
+        self.h_dim = 512
 
         self.glyph_crop = Crop(self.h, self.w, crop_dim, crop_dim)
-        
-        self.cnn = nn.Sequential(
-            nn.Conv2d(1, 16, kernel_size=3, stride=1),
-            nn.ReLU(),
-            nn.Conv2d(16, 32, kernel_size=3, stride=1),
-            nn.ReLU(),
+        self.embed = nn.Embedding(nethack.MAX_GLYPH, self.k_dim)
+
+        K = embedding_dim
+        F = 3
+        S = 1
+        P = 1
+        M = 16
+        Y = 8
+        L = num_layers
+
+        in_channels = [K] + [M] * (L - 1)
+        out_channels = [M] * (L - 1) + [Y]
+
+        def interleave(xs, ys):
+            return [val for pair in zip(xs, ys) for val in pair]
+
+        conv_extract = [
+            nn.Conv2d(
+                in_channels=in_channels[i],
+                out_channels=out_channels[i],
+                kernel_size=(F, F),
+                stride=S,
+                padding=P,
+            )
+            for i in range(L)
+        ]
+
+        self.extract_representation = nn.Sequential(
+            *interleave(conv_extract, [nn.ELU()] * len(conv_extract))
         )
         
-        self.glyph_flatten = nn.Flatten()
-        
+        # CNN crop model.
+        conv_extract_crop = [
+            nn.Conv2d(
+                in_channels=in_channels[i],
+                out_channels=out_channels[i],
+                kernel_size=(F, F),
+                stride=S,
+                padding=P,
+            )
+            for i in range(L)
+        ]
+
+        self.extract_crop_representation = nn.Sequential(
+            *interleave(conv_extract_crop, [nn.ELU()] * len(conv_extract))
+        )
+
+        out_dim = self.k_dim
+        # CNN over full glyph map
+        out_dim += self.h * self.w * Y
+
+        # CNN crop model.
+        out_dim += crop_dim**2 * Y
+
+        self.embed_blstats = nn.Sequential(
+            nn.Linear(self.blstats_shape, self.k_dim),
+            nn.ReLU(),
+            nn.Linear(self.k_dim, self.k_dim),
+            nn.ReLU(),
+        )
+
         self.fc = nn.Sequential(
-            nn.Linear(in_features=32*11*11, out_features=final_layer_dims),
+            nn.Linear(out_dim, self.h_dim),
+            nn.ReLU(),
+            nn.Linear(self.h_dim, self.h_dim),
             nn.ReLU(),
         )
 
-        self.actor = nn.Linear(in_features=final_layer_dims, out_features=self.num_actions)
-        self.critic = nn.Linear(in_features=final_layer_dims, out_features=1)
+        self.actor = nn.Linear(self.h_dim, self.num_actions)
+        self.critic = nn.Linear(self.h_dim, 1)
 
-        self.lstm = nn.LSTMCell(final_layer_dims, final_layer_dims)
+        self.lstm = nn.LSTMCell(self.h_dim, self.h_dim)
 
-    def forward(self, observed_glyphs, observed_stats, hx, cx):
+    def _select(self, embed, x):
+        # Work around slow backward pass of nn.Embedding, see
+        # https://github.com/pytorch/pytorch/issues/24912
+        out = embed.weight.index_select(0, x.reshape(-1))
+    
+        return out.reshape(x.shape + (-1,))
+
+    def forward(self, observed_glyphs, observed_stats, h_t, c_t):
+        B = observed_glyphs.shape[0]
+
+        blstats_emb = self.embed_blstats(observed_stats)
+        reps = [blstats_emb]
+
         coordinates = observed_stats[:, :2]
-        x_glyphs = self.glyph_crop(observed_glyphs, coordinates).unsqueeze(1).float()
-        x_glyphs = self.cnn(x_glyphs)
-        x_glyphs = self.glyph_flatten(x_glyphs)
-        x = self.fc(x_glyphs)
-        
-        hx, cx = self.lstm(x, (hx, cx))
-        x = hx
+        observed_glyphs = observed_glyphs.long()
+        crop = self.glyph_crop(observed_glyphs, coordinates)
 
-        actor = Categorical(logits=self.actor(x))
-        critic = self.critic(x)
+        crop_emb = self._select(self.embed, crop)
+        crop_emb = crop_emb.transpose(1, 3)
+        crop_rep = self.extract_crop_representation(crop_emb)
+        crop_rep = crop_rep.view(B, -1)
+        reps.append(crop_rep)
         
-        return actor, critic, hx, cx
+        glyphs_emb = self._select(self.embed, observed_glyphs)
+        glyphs_emb = glyphs_emb.transpose(1, 3)
+        glyphs_rep = self.extract_representation(glyphs_emb)
+        glyphs_rep = glyphs_rep.view(B, -1)
+        reps.append(glyphs_rep)
+        
+        st = torch.cat(reps, dim=1)
+        st = self.fc(st)
+
+        h_t, c_t = self.lstm(st, (h_t, c_t))
+        st = h_t   
+
+        actor = Categorical(logits=self.actor(st))
+        critic = self.critic(st)
+
+        return actor, critic, h_t, c_t

@@ -18,13 +18,23 @@ class ExampleAgent():
     def __init__(self, FLAGS):
         self.flags = FLAGS
 
+        self.env = gym.make(
+            FLAGS.env,
+            savedir=FLAGS.savedir,
+            max_episode_steps=FLAGS.max_steps,
+            allow_all_yn_questions=True,
+            allow_all_modes=True,
+        )
+
     def go_back(self, num_lines):
         print("\033[%dA" % num_lines)
 
     def get_action(self):
         raise NotImplementedError('Should implement get_action on example agent.')
 
-    def run_episodes(self, env):
+    def run_episodes(self):
+        env = self.env
+        
         obs = env.reset()
 
         steps = 0

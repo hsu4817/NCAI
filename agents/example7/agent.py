@@ -20,7 +20,8 @@ class Agent(ExampleAgent):
         self.a2c_lstm = A2C_LSTM()
         self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
 
-        self.hx, self.cx = torch.tensor(torch.zeros(1, 256)), torch.tensor(torch.zeros(1, 256)) #크기는 final layer dimension과 맞춰준다.
+        self.h_t = torch.zeros(1, 512).clone().detach() #lstm cell의 dimension과 맞춰준다.
+        self.c_t = torch.zeros(1, 512).clone().detach() #lstm cell의 dimension과 맞춰준다.
         
         self.path = './agents/example7/policy.pt'
         if self.flags.mode != 'train':
@@ -33,10 +34,10 @@ class Agent(ExampleAgent):
         return action
     
     def get_actor_critic(self, env, obs):
-        pre_map = torch.from_numpy(obs['glyphs']).float().unsqueeze(0)
-        pre_stat = torch.from_numpy(obs['blstats']).float().unsqueeze(0)
+        observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0)
+        observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0)
 
-        actor, critic, self.hx, self.cx = self.a2c_lstm(pre_map, pre_stat, self.hx, self.cx)
+        actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
         return actor, critic
     
     def optimize_td_loss(self, log_probs, critics, entropies, returns):        
@@ -59,7 +60,9 @@ class Agent(ExampleAgent):
 
         return loss
 
-    def train(self, env):
+    def train(self):
+        env = self.env
+        
         episode_rewards = [0.0]
         average_rewards = []
         log_probs, critics, rewards, dones, entropies = [], [], [], [], []
@@ -106,6 +109,7 @@ class Agent(ExampleAgent):
                 print("Episodes: {}".format(num_episodes))
                 print("Reward: {}".format(episode_rewards[-1]))
                 print("********************************************************")
+                writer.add_scalar('rewards/episode', episode_rewards[-1], num_episodes)
                 episode_rewards.append(0.0)
                 log_probs, critics, rewards, dones, entropies = [], [], [], [], []
                 

@@ -8,6 +8,9 @@ import math
 from ExampleAgent import ExampleAgent
 from .a2c import A2C
 
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
+
 class Agent(ExampleAgent):
     def __init__(self, FLAGS):
         super().__init__(FLAGS)
@@ -23,41 +26,6 @@ class Agent(ExampleAgent):
         self.path = './agents/example6/policy.pt'
         if self.flags.mode != 'train':
             self.a2c.load_state_dict(torch.load(self.path))
-    
-    def preprocess_map(self, obs):
-        pre = []
-
-        available = [ord('.'), ord('#')]
-        unavailable = [ord(' '), ord('`')]
-        door_or_wall = [ord('|'), ord('-')]
-
-        chars = obs['chars']
-        colors = obs['colors']
-        for y in range(21):
-            pre_line = []
-            for x in range(79):
-                char = chars[y][x]
-                color = colors[y][x]
-                
-                pre_char = 1.0
-                if char in unavailable:
-                    pre_char = 0.0
-                elif char in door_or_wall and color == 7:
-                    pre_char = 0.0
-                elif char == ord('#') and color == 6:
-                    pre_char = 0.0
-                pre_line.append(pre_char)
-            pre.append(pre_line)
-        
-        return np.array(pre).astype(np.float32)
-    
-    def preprocess_stat(self, obs):
-        blstats = obs['blstats']
-        x = blstats[0]
-        y = blstats[1]
-        hp = float(blstats[10])
-
-        return np.array([x, y, hp,]).astype(np.float32)
 
     def get_action(self, env, obs):
         actor, critic = self.get_actor_critic(env, obs)
@@ -66,13 +34,10 @@ class Agent(ExampleAgent):
         return action
     
     def get_actor_critic(self, env, obs):
-        pre_map = self.preprocess_map(obs)
-        pre_stat = self.preprocess_stat(obs)
+        observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0)
+        observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0)
 
-        pre_map = torch.from_numpy(pre_map).float().unsqueeze(0)
-        pre_stat = torch.from_numpy(pre_stat).float().unsqueeze(0)
-
-        actor, critic = self.a2c(pre_map, pre_stat)
+        actor, critic = self.a2c(observed_glyphs, observed_stats)
         return actor, critic
     
     def optimize_td_loss(self, log_probs, critics, entropies, returns):        
@@ -95,7 +60,9 @@ class Agent(ExampleAgent):
 
         return loss
 
-    def train(self, env):
+    def train(self):
+        env = self.env
+        
         episode_rewards = [0.0]
         average_rewards = []
         log_probs, critics, rewards, dones, entropies = [], [], [], [], []
@@ -143,6 +110,7 @@ class Agent(ExampleAgent):
                 print("Episodes: {}".format(num_episodes))
                 print("Reward: {}".format(episode_rewards[-1]))
                 print("********************************************************")
+                writer.add_scalar('rewards/episode', episode_rewards[-1], num_episodes)
                 episode_rewards.append(0.0)
                 log_probs, critics, rewards, dones, entropies = [], [], [], [], []
                 

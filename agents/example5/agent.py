@@ -8,12 +8,16 @@ import math
 from ExampleAgent import ExampleAgent
 from .dqn import ReplayBuffer, DQN
 
+from torch.utils.tensorboard import SummaryWriter
+writer = SummaryWriter()
+
 class Agent(ExampleAgent):
     def __init__(self, FLAGS):
         super().__init__(FLAGS)
 
         self.buffer_size = 5000
         self.batch_size = 64
+        self.update_freq = 10
         self.gamma = 0.99
 
         self.policy = DQN()
@@ -24,51 +28,13 @@ class Agent(ExampleAgent):
         self.path = './agents/example5/policy.pt'
         if self.flags.mode != 'train':
             self.policy.load_state_dict(torch.load(self.path))
-    
-    def preprocess_map(self, obs):
-        pre = []
-
-        available = [ord('.'), ord('#')]
-        unavailable = [ord(' '), ord('`')]
-        door_or_wall = [ord('|'), ord('-')]
-
-        chars = obs['chars']
-        colors = obs['colors']
-        for y in range(21):
-            pre_line = []
-            for x in range(79):
-                char = chars[y][x]
-                color = colors[y][x]
-                
-                pre_char = 1.0
-                if char in unavailable:
-                    pre_char = 0.0
-                elif char in door_or_wall and color == 7:
-                    pre_char = 0.0
-                elif char == ord('#') and color == 6:
-                    pre_char = 0.0
-                pre_line.append(pre_char)
-            pre.append(pre_line)
-        
-        return np.array(pre).astype(np.float32)
-    
-    def preprocess_stat(self, obs):
-        blstats = obs['blstats']
-        x = blstats[0]
-        y = blstats[1]
-        hp = float(blstats[10])
-
-        return np.array([x, y, hp,]).astype(np.float32)
 
     def get_action(self, env, obs):
-        pre_map = self.preprocess_map(obs)
-        pre_stat = self.preprocess_stat(obs)
-
-        pre_map = torch.from_numpy(pre_map).float().unsqueeze(0)
-        pre_stat = torch.from_numpy(pre_stat).float().unsqueeze(0)
+        observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0)
+        observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0)
 
         with torch.no_grad():
-            q = self.policy(pre_map, pre_stat)
+            q = self.policy(observed_glyphs, observed_stats)
         
         _, action = q.max(1)
         return action.item()
@@ -100,16 +66,15 @@ class Agent(ExampleAgent):
 
         return loss.item()
 
-    def train(self, env):
+    def train(self):
+        env = self.env
+
         episode_rewards = [0.0]
         average_rewards = []
         losses = []
 
         obs = env.reset()
         for time_step in range(0, self.flags.max_steps):
-            pre_map = self.preprocess_map(obs)
-            pre_stat = self.preprocess_stat(obs)
-            
             eps_threshold = math.exp(-len(episode_rewards)/50)
             if random.random() <= eps_threshold:
                 action = env.action_space.sample()
@@ -123,22 +88,20 @@ class Agent(ExampleAgent):
             if done:
                 obs = env.reset()
             else:
-                new_pre_map = self.preprocess_map(new_obs)
-                new_pre_stat = self.preprocess_stat(new_obs)
-                self.buffer.push(pre_map,
-                                pre_stat,
-                                new_pre_map,
-                                new_pre_stat,
+                self.buffer.push(obs['glyphs'],
+                                obs['blstats'],
+                                new_obs['glyphs'],
+                                new_obs['blstats'],
                                 action,
                                 reward,
                                 float(done))
                 obs = new_obs
             
-            if time_step > 1000:
+            if time_step > self.batch_size:
                 loss = self.optimize_td_loss()
                 losses.append(loss)
 
-            if time_step > 1000 and time_step % 1000 == 0:
+            if time_step % self.update_freq == 0:
                 self.target.load_state_dict(self.policy.state_dict())
                 torch.save(self.policy.state_dict(), self.path)
             
@@ -150,5 +113,6 @@ class Agent(ExampleAgent):
                 print("Episodes: {}".format(num_episodes))
                 print("Reward: {}".format(episode_rewards[-1]))
                 print("********************************************************")
+                writer.add_scalar('rewards/episode', episode_rewards[-1], num_episodes)
                 episode_rewards.append(0.0)
                 losses = []

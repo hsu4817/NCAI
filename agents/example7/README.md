@@ -6,9 +6,11 @@
 
 Long Short-Term Memory Network(이하 LSTM)은 RNN의 한 종류로, 기본적인 RNN의 layer는 단순한 구조를 가지고 있는 반면 LSTM은 긴 의존 기간을 필요로 하는 학습을 수행할 수 있도록 비교적 복잡한 구조를 가진다. 단순한 구조의 layer는 state 간의 시간 격차가 커질 수록 [vanishing gradient](https://ko.wikipedia.org/wiki/%EA%B8%B0%EC%9A%B8%EA%B8%B0_%EC%86%8C%EB%A9%B8_%EB%AC%B8%EC%A0%9C) 문제가 발생하여 학습을 이어나가기 어렵다. 이를 해결하기 위해 layer의 구조를 변경한 것이 LSTM이다. 본문에서 LSTM의 구조에 대해 자세하게 설명하지 않지만, 관심이 있다면 [관련 자료](http://www.incodom.kr/LSTM)를 찾아보는 것을 추천한다. 이번 예제에서는 A2C에 LSTM을 추가한 A2C-LSTM 모델을 구현한다.
 
+<img src="../../pics/a2clstm_model.png"/>
+
 ```a2c-lstm.py```에서 확인할 수 있듯이, A2C-LSTM을 구현하는 방법은 이전 예제에서 A2C 클래스를 선언할 때 LSTM layer를 추가하면 된다. 이때 LSTM layer는 short-term state, long-term state 인자를 추가로 받기 때문에 ```forward``` 함수의 모양을 필요에 맞게 바꾸어준다.
 
-```agent.py```에서는 ```__init__```, ```get_actor_critic``` 함수를 수정한다. ```__init__``` 함수에서 short-term state를 나타내는 hx와 long-term state를 나타내는 cx를 zeros로 초기화한 후, ```get_actor_critic``` 함수에서 이를 업데이트하도록 한다. 또한 경험적으로 입력 값의 전처리 과정을 제외하는 것이 우수한 것을 확인하여 이를 제외하였다. 이외에는 A2C 구현과 완전히 동일하다.
+```agent.py```에서는 ```__init__```, ```get_actor_critic``` 함수를 수정한다. ```__init__``` 함수에서 short-term state를 나타내는 ```h_t```와 long-term state를 나타내는 ```c_t```를 zeros로 초기화한 후, ```get_actor_critic``` 함수에서 이를 업데이트하도록 한다. 이외에는 A2C 구현과 완전히 동일하다.
 
 이 예제를 실행하려면 우선 다음 명령어를 터미널에 입력하여 학습을 통해 policy.pt 파일을 생성해야 한다.
 

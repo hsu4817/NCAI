@@ -18,25 +18,14 @@ from nle import nethack
 def dummy_context():
     yield None
 
-def get_action(env, obs):
-    return env.action_space.sample()
-
 def play():
-    env = gym.make(
-        FLAGS.env,
-        savedir=FLAGS.savedir,
-        max_episode_steps=FLAGS.max_steps,
-        allow_all_yn_questions=True,
-        allow_all_modes=True,
-    )
-
     module = FLAGS.run + ".agent"
     name = "Agent"
     agent = getattr(importlib.import_module(module), name)(FLAGS)
     if FLAGS.mode == 'train':
-        agent.train(env)
+        agent.train()
     elif FLAGS.mode == 'test':
-        agent.run_episodes(env)
+        agent.run_episodes()
 
 def main():
     parser = argparse.ArgumentParser(description="NLE Play tool.")
