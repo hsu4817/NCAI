@@ -95,7 +95,7 @@ class DQN(nn.Module):
         self.h = self.glyph_shape[0]
         self.w = self.glyph_shape[1]
         self.k_dim = embedding_dim
-        self.h_dim = 512
+        self.h_dim = 128
 
         self.glyph_crop = Crop(self.h, self.w, crop_dim, crop_dim)
         self.embed = nn.Embedding(nethack.MAX_GLYPH, self.k_dim)
@@ -105,7 +105,7 @@ class DQN(nn.Module):
         S = 1
         P = 1
         M = 16
-        Y = 8
+        Y = 16
         L = num_layers
 
         in_channels = [K] + [M] * (L - 1)

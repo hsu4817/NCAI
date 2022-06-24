@@ -16,7 +16,7 @@ DQN은 기존의 Q-Learning 알고리즘을 신경망으로 바꾼 것이다. Q-
 
 ```dqn.py```에는 experience replay buffer와 DQN 모델이 구현되어 있다. Experience replay buffer에는 전처리 과정을 거친 현재 state의 맵의 정보와 agent의 blstat, 현재 state에서 선택한 action, 그에 대한 reward, 종료 여부, 전처리 과정을 거친 다음 state의 맵의 정보와 agent의 blstat 정보가 저장된다. Experience replay buffer의 자료구조로 deque를 사용하는데, deque은 double ended queue의 약자로 처음과 끝이 모두 열려있는 큐 형태를 의미한다. 이러한 형태 덕분에 처음과 끝에 새로운 요소를 추가하거나 기존의 요소를 삭제하는 것이 기존의 자료구조에 비해 월등히 빠르다는 장점이 있다. DQN 모델은 NLE 논문의 모델을 참고하여 작성하였다. 현재 state의 전체 glyph, 현재 state의 전체 glyph에서 agent의 주변만 crop한 glyph, 현재 state의 blstat 정보를 embedding한 뒤 각각의 신경망에 입력한다. 신경망에서 출력된 값들을 이어 붙인 뒤 한 번 더 신경망에 입력하고, 이것의 출력 값을 action으로 사용한다. 이러한 모델의 구조는 자유롭게 수정하여 사용하여도 좋다.
 
-```agent.py```에는 학습에 관한 함수들이 정의되어 있다. ```train``` 함수는 전반적인 학습 과정을 진행하는 함수다. ```optimize_td_loss``` 함수는 loss 계산 및 optimizer step을 진행하는 함수이다. 마지막으로 ```get_action``` 함수는 학습된 신경망으로부터 action을 선택하는 함수다.
+```agent.py```에는 학습에 관한 함수들이 정의되어 있다. ```train``` 함수는 전반적인 학습 과정을 진행하는 함수다. 이때 NLE 논문을 참고하여 reward를 tanh로 clip하여 사용하였다. ```optimize_td_loss``` 함수는 loss 계산 및 optimizer step을 진행하는 함수이다. 마지막으로 ```get_action``` 함수는 학습된 신경망으로부터 action을 선택하는 함수다. 
 
 이번 예제와 같이 기본적인 DQN은 NLE에서 좋은 성능을 보이지 못한다. 따라서 DQN 기반의 강화학습을 더 심도있게 구현하고 싶다면, [rainbow](https://arxiv.org/pdf/1710.02298.pdf)의 구현 방법을 공부해 보도록 하자. Rainbow는 Double DQN, prioritized experience replay, dueling network architecture, multi-step bootsrap targets, distributional q-learning, noisy DQN의 여섯 가지 최신 DQN 기법을 모두 적용한 모델이다.
 

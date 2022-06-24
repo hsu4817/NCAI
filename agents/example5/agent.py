@@ -7,9 +7,11 @@ import math
 
 from ExampleAgent import ExampleAgent
 from .dqn import ReplayBuffer, DQN
+from collections import deque
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent(ExampleAgent):
     def __init__(self, FLAGS):
@@ -18,10 +20,10 @@ class Agent(ExampleAgent):
         self.buffer_size = 5000
         self.batch_size = 64
         self.update_freq = 10
-        self.gamma = 0.99
+        self.gamma = 0.999
 
-        self.policy = DQN()
-        self.target = DQN()
+        self.policy = DQN().to(device)
+        self.target = DQN().to(device)
         self.buffer = ReplayBuffer(self.buffer_size)
         self.optimizer = torch.optim.Adam(self.policy.parameters())
         
@@ -30,8 +32,8 @@ class Agent(ExampleAgent):
             self.policy.load_state_dict(torch.load(self.path))
 
     def get_action(self, env, obs):
-        observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0)
-        observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0)
+        observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
+        observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
 
         with torch.no_grad():
             q = self.policy(observed_glyphs, observed_stats)
@@ -41,13 +43,13 @@ class Agent(ExampleAgent):
     
     def optimize_td_loss(self):
         glyphs, stats, next_glyphs, next_stats, actions, rewards, dones = self.buffer.sample(self.batch_size)
-        glyphs = torch.from_numpy(glyphs).float()
-        stats = torch.from_numpy(stats).float()
-        next_glyphs = torch.from_numpy(next_glyphs).float()
-        next_stats = torch.from_numpy(next_stats).float()
-        actions = torch.from_numpy(actions).long()
-        rewards = torch.from_numpy(rewards).float()
-        dones = torch.from_numpy(dones).float()
+        glyphs = torch.from_numpy(glyphs).float().to(device)
+        stats = torch.from_numpy(stats).float().to(device)
+        next_glyphs = torch.from_numpy(next_glyphs).float().to(device)
+        next_stats = torch.from_numpy(next_stats).float().to(device)
+        actions = torch.from_numpy(actions).long().to(device)
+        rewards = torch.from_numpy(rewards).float().to(device)
+        dones = torch.from_numpy(dones).float().to(device)
 
         with torch.no_grad():
             q_next = self.policy(next_glyphs, next_stats)
@@ -64,18 +66,23 @@ class Agent(ExampleAgent):
         loss.backward()
         self.optimizer.step()
 
-        return loss.item()
-
     def train(self):
         env = self.env
 
-        episode_rewards = [0.0]
-        average_rewards = []
-        losses = []
+        num_episodes = 0
+        episode_scores = deque([], maxlen=100)
+        episode_dungeonlv = deque([], maxlen=100)
+        episode_explv = deque([], maxlen=100)
+        episode_steps = deque([], maxlen=100)
 
         obs = env.reset()
-        for time_step in range(0, self.flags.max_steps):
-            eps_threshold = math.exp(-len(episode_rewards)/50)
+        for time_step in range(self.flags.max_steps):
+            old_score = obs['blstats'][9]
+            old_dlv = obs['blstats'][12]
+            old_elv = obs['blstats'][18]
+            old_steps = obs['blstats'][20]
+
+            eps_threshold = math.exp(-len(episode_scores)/50)
             if random.random() <= eps_threshold:
                 action = env.action_space.sample()
             else:
@@ -83,9 +90,13 @@ class Agent(ExampleAgent):
 
             new_obs, reward, done, info = env.step(action)
 
-            episode_rewards[-1] += reward
-
             if done:
+                num_episodes += 1
+                episode_scores.append(old_score)
+                episode_dungeonlv.append(old_dlv)
+                episode_explv.append(old_elv)
+                episode_steps.append(old_steps)
+
                 obs = env.reset()
             else:
                 self.buffer.push(obs['glyphs'],
@@ -93,26 +104,29 @@ class Agent(ExampleAgent):
                                 new_obs['glyphs'],
                                 new_obs['blstats'],
                                 action,
-                                reward,
+                                np.tanh(reward/100),
                                 float(done))
                 obs = new_obs
             
             if time_step > self.batch_size:
-                loss = self.optimize_td_loss()
-                losses.append(loss)
+                self.optimize_td_loss()
 
             if time_step % self.update_freq == 0:
                 self.target.load_state_dict(self.policy.state_dict())
                 torch.save(self.policy.state_dict(), self.path)
             
             if done:
-                num_episodes = len(episode_rewards)
-                print("********************************************************")
-                print("Average loss: {}".format(np.array(losses).mean()))
-                print("Total Steps: {}".format(time_step))
+                print("Elapsed Steps: {}%".format((time_step+1)/self.flags.max_steps*100))
                 print("Episodes: {}".format(num_episodes))
-                print("Reward: {}".format(episode_rewards[-1]))
-                print("********************************************************")
-                writer.add_scalar('rewards/episode', episode_rewards[-1], num_episodes)
-                episode_rewards.append(0.0)
-                losses = []
+                print("Last 100 Episode Mean Score: {}".format(sum(episode_scores)/len(episode_scores)))
+                print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv)))
+                print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv)))
+                print("Last 100 Episode Mean Step: {}".format(sum(episode_steps)/len(episode_steps)))
+                print()
+                
+                writer.add_scalar('Last 100 Episode Mean Score', sum(episode_scores)/len(episode_scores), time_step+1)
+                writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv), time_step+1)
+                writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv), time_step+1)
+                writer.add_scalar('Last 100 Episode Mean Step', sum(episode_steps)/len(episode_steps), time_step+1)
+
+                episode_reward = 0
