@@ -25,8 +25,8 @@ class Agent(ExampleAgent):
         self.a2c_lstm = A2C_LSTM().to(device)
         self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
 
-        self.h_t = torch.zeros(1, 128).clone().detach().to(device) #lstm cell의 dimension과 맞춰준다.
-        self.c_t = torch.zeros(1, 128).clone().detach().to(device) #lstm cell의 dimension과 맞춰준다.
+        self.h_t = torch.zeros(1, 128).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+        self.c_t = torch.zeros(1, 128).clone().to(device) #lstm cell의 dimension과 맞춰준다.
         
         self.path = './agents/example7/policy.pt'
         if self.flags.mode != 'train':

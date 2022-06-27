@@ -58,9 +58,15 @@ $ sudo apt-get update && apt-get --allow-unauthenticated install -y \
 Anaconda와 CMake 설치가 완료되었다면, 아래 명령어를 통해 가상환경을 생성하고 NLE를 설치한다.
 
 ```bash
-$ conda create -y -n nle python=3.8
+$ conda create -y -n nle python=3.9
 $ conda activate nle
 $ pip install nle
+```
+
+현재 최신 버전의 gym으로 NLE를 실행하면 오류가 발생한다. 따라서 gym 버전을 다운그레이드한 후에 NLE를 사용할 수 있다.
+
+```bash
+$ pip install gym==0.23.0
 ```
 
 NLE를 설치했다면 아래 코드를 실행해 보자. OpenAI Gym을 사용할 때와 동일하게 사용하면 된다.
@@ -184,6 +190,18 @@ NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다�
 
 # Appendix
 
+## PyTorch
+
+Python으로 머신러닝을 구현할 때, 가장 많이 사용하는 프레임워크로 Tensorflow와 PyTorch가 있다. 각각의 장단이 존재하지만, 본문에서는 조금 더 직관적으로 모델을 구현할 수 있고 디버깅이 쉬운 PyTorch를 사용할 것이다. PyTorch를 설치하기 위해서는 [공식 홈페이지](https://pytorch.org/get-started/locally/)에서 자신의 환경에 알맞은 버전을 설치하면 된다. 본문에서는 첨부한 사진과 동일하게 설치하고자 하였다. 
+
+<img src="./pics/pytorch.png">
+
+```bash
+(nle) ~/NCF2022$ conda install pytorch torchvision torchaudio cudatoolkit=11.3 -c pytorch
+```
+
+## Tensorboard
+
 작성한 모델의 성능을 알아보기 위해 loss, reward 등 성능과 관련된 값들의 추이를 확인하고 싶을 때가 있을 것이다. print를 사용하여 값들을 직접 확인하는 것도 좋지만, 그래프를 통해 직관적으로 파악하고 싶다면 TensorBoard를 사용하는 것이 좋다. NLE는 PyTorch를 기반으로 작동되는 라이브러리이기 때문에, PyTorch에서 TensorBoard를 사용하는 방법을 알아보도록 하자.
 
 ``` python
@@ -235,9 +253,37 @@ TensorBoard는 .*tfevents.* 파일을 찾기 위해 logdir의 인자로 받은 �
 
 이제 [http://localhost:6006](http://localhost:6006)으로 이동하여 시각화된 데이터를 확인할 수 있다.
 
+## CUDA
+
+만약 GPU를 사용할 수 있는 환경이라면, 학습에서는 GPU를 사용하는 것이 더욱 효과적이다. 머신러닝은 대부분의 과정에서 단순한 사칙연산만을 수행하는데, GPU는 그러한 연산들을 쉽게 병렬화하여 한 번에 여러 코어에서 계산이 가능하다. 그렇기 때문에 머신러닝에서는 GPU를 사용하여 보다 효율적으로 연산을 수행할 수 있다. PyTorch에서는 CUDA를 설치하여 GPU를 사용할 수 있다. CUDA를 설치하기 위해서 우선 WSL 버전을 확인하도록 한다. 만약 WSL2가 아닌 WSL1을 사용하고 있다면, WSL2으로 업그레이드 해야 한다. WSL2 설치 및 업그레이드 방법은 [마이크로소프트 공식 문서](https://docs.microsoft.com/ko-kr/windows/wsl/install)를 참고하도록 하자.
+
+이제 CUDA를 설치하기 위해 [NVIDIA CUDA on WSL driver](https://developer.nvidia.com/cuda/wsl)를 설치한다. Get CUDA Driver을 눌러 자신의 사양에 알맞게 드라이버를 설치하도록 한다.
+
+다음으로는 CUDA toolkit을 설치하기 위해 다음 명령어를 터미널에 순서대로 입력하도록 한다.
+
+``` bash
+(nle) ~/NCF2022$ wget https://developer.download.nvidia.com/compute/cuda/repos/wsl-ubuntu/x86_64/cuda-wsl-ubuntu.pin
+(nle) ~/NCF2022$ sudo mv cuda-wsl-ubuntu.pin /etc/apt/preferences.d/cuda-repository-pin-600
+(nle) ~/NCF2022$ wget https://developer.download.nvidia.com/compute/cuda/11.7.0/local_installers/cuda-repo-wsl-ubuntu-11-7-local_11.7.0-1_amd64.deb
+(nle) ~/NCF2022$ sudo dpkg -i cuda-repo-wsl-ubuntu-11-7-local_11.7.0-1_amd64.deb
+(nle) ~/NCF2022$ sudo apt-get update
+(nle) ~/NCF2022$ sudo apt-get -y install cuda
+```
+
+설치가 잘 되었는지 확인하기 위해, 다음 코드를 실행하도록 해보자.
+
+``` python
+>>> import torch
+>>> torch.cuda.is_available()
+True
+```
+
+다음과 같은 결과를 얻었다면, 설치가 잘 완료된 것이다.
+
 # Reference
 [1] NetHack. 2020. NetHack. https://github.com/NetHack/NetHack/tree/NetHack-3.6.6_PostRelease. (2022).  
 [2] facebookresearch. 2022. nle. https://github.com/facebookresearch/nle. (2022).  
 [3] coolwanglu. 2018. BrowserHack. https://github.com/coolwanglu/BrowserHack. (2022).  
 [4] [Küttler, Heinrich, et al. “The NetHack Learning Environment” arXiv preprint arXiv:2006.13760 (2020)](https://arxiv.org/abs/2006.13760)  
 [5] [PYTORCH로 TENSORBOARD 사용하기](https://tutorials.pytorch.kr/recipes/recipes/tensorboard_with_pytorch.html)
+[6] [CUDA on WSL User Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)
