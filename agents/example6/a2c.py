@@ -166,7 +166,7 @@ class A2C(nn.Module):
         st = torch.cat(reps, dim=1)
         st = self.fc(st)
 
-        actor = Categorical(logits=self.actor(st))
+        actor = self.actor(st)
         critic = self.critic(st)
 
         return actor, critic

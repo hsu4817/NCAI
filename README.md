@@ -285,5 +285,5 @@ True
 [2] facebookresearch. 2022. nle. https://github.com/facebookresearch/nle. (2022).  
 [3] coolwanglu. 2018. BrowserHack. https://github.com/coolwanglu/BrowserHack. (2022).  
 [4] [Küttler, Heinrich, et al. “The NetHack Learning Environment” arXiv preprint arXiv:2006.13760 (2020)](https://arxiv.org/abs/2006.13760)  
-[5] [PYTORCH로 TENSORBOARD 사용하기](https://tutorials.pytorch.kr/recipes/recipes/tensorboard_with_pytorch.html)
-[6] [CUDA on WSL User Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)
+[5] [PYTORCH로 TENSORBOARD 사용하기](https://tutorials.pytorch.kr/recipes/recipes/tensorboard_with_pytorch.html)  
+[6] [CUDA on WSL User Guide](https://docs.nvidia.com/cuda/wsl-user-guide/index.html)  

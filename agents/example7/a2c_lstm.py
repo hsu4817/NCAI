@@ -171,7 +171,7 @@ class A2C_LSTM(nn.Module):
         h_t, c_t = self.lstm(st, (h_t, c_t))
         st = h_t   
 
-        actor = Categorical(logits=self.actor(st))
+        actor = self.actor(st)
         critic = self.critic(st)
 
         return actor, critic, h_t, c_t

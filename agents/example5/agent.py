@@ -75,58 +75,64 @@ class Agent(ExampleAgent):
         episode_explv = deque([], maxlen=100)
         episode_steps = deque([], maxlen=100)
 
+        time_step = 0
+        max_steps_per_episode = 32*80
+
         obs = env.reset()
-        for time_step in range(self.flags.max_steps):
-            old_score = obs['blstats'][9]
-            old_dlv = obs['blstats'][12]
-            old_elv = obs['blstats'][18]
-            old_steps = obs['blstats'][20]
+        while time_step < self.flags.max_steps:
+            log_probs, critics, rewards, dones, entropies = [], [], [], [], []
 
-            eps_threshold = math.exp(-len(episode_scores)/50)
-            if random.random() <= eps_threshold:
-                action = env.action_space.sample()
-            else:
-                action = self.get_action(env, obs)
+            for mini_step in range(max_steps_per_episode):
+                old_score = obs['blstats'][9]
+                old_dlv = obs['blstats'][12]
+                old_elv = obs['blstats'][18]
+                old_steps = obs['blstats'][20]
 
-            new_obs, reward, done, info = env.step(action)
+                eps_threshold = math.exp(-len(episode_scores)/50)
+                if random.random() <= eps_threshold:
+                    action = env.action_space.sample()
+                else:
+                    action = self.get_action(env, obs)
 
-            if done:
-                num_episodes += 1
-                episode_scores.append(old_score)
-                episode_dungeonlv.append(old_dlv)
-                episode_explv.append(old_elv)
-                episode_steps.append(old_steps)
+                new_obs, reward, done, info = env.step(action)
 
-                obs = env.reset()
-            else:
-                self.buffer.push(obs['glyphs'],
-                                obs['blstats'],
-                                new_obs['glyphs'],
-                                new_obs['blstats'],
-                                action,
-                                np.tanh(reward/100),
-                                float(done))
-                obs = new_obs
-            
-            if time_step > self.batch_size:
-                self.optimize_td_loss()
+                if done:
+                    num_episodes += 1
+                    episode_scores.append(old_score)
+                    episode_dungeonlv.append(old_dlv)
+                    episode_explv.append(old_elv)
+                    episode_steps.append(old_steps)
 
-            if time_step % self.update_freq == 0:
-                self.target.load_state_dict(self.policy.state_dict())
-                torch.save(self.policy.state_dict(), self.path)
-            
-            if done:
-                print("Elapsed Steps: {}%".format((time_step+1)/self.flags.max_steps*100))
-                print("Episodes: {}".format(num_episodes))
-                print("Last 100 Episode Mean Score: {}".format(sum(episode_scores)/len(episode_scores)))
-                print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv)))
-                print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv)))
-                print("Last 100 Episode Mean Step: {}".format(sum(episode_steps)/len(episode_steps)))
-                print()
+                    obs = env.reset()
+                else:
+                    self.buffer.push(obs['glyphs'],
+                                    obs['blstats'],
+                                    new_obs['glyphs'],
+                                    new_obs['blstats'],
+                                    action,
+                                    np.tanh(reward/100),
+                                    float(done))
+                    obs = new_obs
                 
-                writer.add_scalar('Last 100 Episode Mean Score', sum(episode_scores)/len(episode_scores), time_step+1)
-                writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv), time_step+1)
-                writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv), time_step+1)
-                writer.add_scalar('Last 100 Episode Mean Step', sum(episode_steps)/len(episode_steps), time_step+1)
+                if time_step > self.batch_size:
+                    self.optimize_td_loss()
 
-                episode_reward = 0
+                if time_step % self.update_freq == 0:
+                    self.target.load_state_dict(self.policy.state_dict())
+                    torch.save(self.policy.state_dict(), self.path)
+                
+                if mini_step == max_steps_per_episode-1:
+                    time_step += max_steps_per_episode
+
+                    print("Elapsed Steps: {}%".format((time_step)/self.flags.max_steps*100))
+                    print("Episodes: {}".format(num_episodes))
+                    print("Last 100 Episode Mean Score: {}".format(sum(episode_scores)/len(episode_scores) if episode_scores else 0))
+                    print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 0))
+                    print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv) if episode_explv else 0))
+                    print("Last 100 Episode Mean Step: {}".format(sum(episode_steps)/len(episode_steps) if episode_steps else 0))
+                    print()
+                    
+                    writer.add_scalar('Last 100 Episode Mean Score', sum(episode_scores)/len(episode_scores) if episode_scores else 0, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 0, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv) if episode_explv else 0, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Step', sum(episode_steps)/len(episode_steps) if episode_steps else 0, time_step+1)
