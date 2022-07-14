@@ -5,6 +5,8 @@ from torch import nn
 import numpy as np
 import math
 
+import gym
+
 from ExampleAgent import ExampleAgent
 from .a2c import A2C
 from collections import deque
@@ -14,40 +16,68 @@ writer = SummaryWriter()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent(ExampleAgent):
-    def __init__(self, FLAGS):
+    def __init__(self, FLAGS=None):
         super().__init__(FLAGS)
 
+        self.num_envs = 32
+        self.max_steps_per_episode = 80
+        self.env = gym.vector.make(
+            FLAGS.env,
+            savedir=FLAGS.savedir,
+            max_episode_steps=FLAGS.max_steps,
+            allow_all_yn_questions=True,
+            allow_all_modes=True,
+            num_envs=self.num_envs,
+        )
+
         self.gamma = 0.999
+        self.closs_coef = 0.5
+        self.eloss_coef = 0.0006
 
         self.a2c = A2C().to(device)
         self.optimizer = torch.optim.Adam(self.a2c.parameters())
-
-        def lr_lambda(epoch):
-            return 1 - min(epoch*32*80, self.flags.max_steps) / self.flags.max_steps
-        
-        self.scheduler = torch.optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda)
 
         self.path = './agents/example6/policy.pt'
         if self.flags.mode != 'train':
             self.a2c.load_state_dict(torch.load(self.path))
 
+            self.env = gym.make(
+                FLAGS.env,
+                savedir=FLAGS.savedir,
+                max_episode_steps=FLAGS.max_steps,
+                allow_all_yn_questions=True,
+                allow_all_modes=True,
+            )
+
     def get_action(self, env, obs):
         actor, critic = self.get_actor_critic(env, obs)
+
+        if self.flags.mode != 'train':
+            action = torch.multinomial(F.softmax(actor, dim=1), num_samples=1)
         
-        action = torch.multinomial(F.softmax(actor, dim=1), num_samples=1)
-        return action
-    
+            return action
+        else:
+            action = [torch.multinomial(F.softmax(actor_, dim=0), num_samples=1) for actor_ in actor]
+
+            return torch.LongTensor(action)
+
     def get_actor_critic(self, env, obs):
-        observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
-        observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
+        if self.flags.mode != 'train':
+            observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
+            observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
+        else:
+            observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(device)
+            observed_stats = torch.from_numpy(obs['blstats']).float().to(device)
 
         actor, critic = self.a2c(observed_glyphs, observed_stats)
         return actor, critic
     
     def optimize_td_loss(self, actors, actions, critics, returns):
         actors = torch.cat(actors).to(device)
-        actions = torch.cat(actions).to(device)        
-        critics = torch.FloatTensor(critics).to(device)
+        actions = torch.cat(actions).to(device)
+
+        returns = torch.cat(returns)
+        critics = torch.cat(critics)        
         advantages = returns - critics
 
         #compute actor loss
@@ -67,13 +97,12 @@ class Agent(ExampleAgent):
         log_policy = F.log_softmax(actors, dim=-1)
         entropy_loss = torch.sum(policy * log_policy)
         
-        loss = actor_loss + critic_loss + entropy_loss
+        loss = actor_loss + self.closs_coef * critic_loss + self.eloss_coef * entropy_loss
         
         self.optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(self.a2c.parameters(), 40.0)
         self.optimizer.step()
-        self.scheduler.step()
 
     def train(self):
         env = self.env
@@ -85,17 +114,18 @@ class Agent(ExampleAgent):
         episode_steps = deque([], maxlen=100)
 
         time_step = 0
-        max_steps_per_episode = 32*80
 
         obs = env.reset()
         while time_step < self.flags.max_steps:
             actors, actions, critics, rewards, dones = [], [], [], [], []
 
-            for mini_step in range(max_steps_per_episode):
-                old_score = obs['blstats'][9]
-                old_dlv = obs['blstats'][12]
-                old_elv = obs['blstats'][18]
-                old_steps = obs['blstats'][20]
+            for mini_step in range(self.max_steps_per_episode):
+                old_score, old_dlv, old_elv, old_steps = [], [], [], []
+                for blstats in obs['blstats']:
+                    old_score.append(blstats[9])
+                    old_dlv.append(blstats[12])
+                    old_elv.append(blstats[18])
+                    old_steps.append(blstats[20])
 
                 action = self.get_action(env, obs)
                 actor, critic = self.get_actor_critic(env, obs)
@@ -106,45 +136,45 @@ class Agent(ExampleAgent):
                 actions.append(action)
                 critics.append(critic.squeeze())
                 rewards.append(np.tanh(reward/100))
-                dones.append(done)
+                dones.append(np.array(done, dtype=int))
 
-                if done:
-                    num_episodes += 1
-                    episode_scores.append(old_score)
-                    episode_dungeonlv.append(old_dlv)
-                    episode_explv.append(old_elv)
-                    episode_steps.append(old_steps)
+                for i in range(self.num_envs):
+                    if done[i]:
+                        num_episodes += 1
+                        episode_scores.append(old_score[i])
+                        episode_dungeonlv.append(old_dlv[i])
+                        episode_explv.append(old_elv[i])
+                        episode_steps.append(old_steps[i])
+                obs = new_obs
 
-                    obs = env.reset()
-                else:                
-                    obs = new_obs
-
-                if mini_step == max_steps_per_episode-1:
-                    time_step += max_steps_per_episode
+                if mini_step == self.max_steps_per_episode-1:
+                    time_step += self.num_envs*self.max_steps_per_episode
 
                     with torch.no_grad():
                         _, new_critic = self.get_actor_critic(env, new_obs)
 
                         returns = []
-                        r = new_critic
+                        r = new_critic.squeeze()
                         for t in reversed(range(len(rewards))):
-                            r = rewards[t] + self.gamma * r * (1.0 - dones[t])
+                            reward = torch.from_numpy(rewards[t]).to(device)
+                            done = torch.from_numpy(dones[t]).to(device)
+
+                            r = reward + self.gamma * r * (1.0 - done)
                             returns.insert(0, r)
-                        returns = torch.FloatTensor(returns).to(device)
 
                     self.optimize_td_loss(actors, actions, critics, returns)
 
                     print("Elapsed Steps: {}%".format((time_step)/self.flags.max_steps*100))
                     print("Episodes: {}".format(num_episodes))
                     print("Last 100 Episode Mean Score: {}".format(sum(episode_scores)/len(episode_scores) if episode_scores else 0))
-                    print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 0))
-                    print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv) if episode_explv else 0))
+                    print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 1))
+                    print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv) if episode_explv else 1))
                     print("Last 100 Episode Mean Step: {}".format(sum(episode_steps)/len(episode_steps) if episode_steps else 0))
                     print()
                     
                     writer.add_scalar('Last 100 Episode Mean Score', sum(episode_scores)/len(episode_scores) if episode_scores else 0, time_step+1)
-                    writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 0, time_step+1)
-                    writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv) if episode_explv else 0, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 1, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv) if episode_explv else 1, time_step+1)
                     writer.add_scalar('Last 100 Episode Mean Step', sum(episode_steps)/len(episode_steps) if episode_steps else 0, time_step+1)
                     
                     torch.save(self.a2c.state_dict(), self.path)

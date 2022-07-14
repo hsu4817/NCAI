@@ -105,7 +105,7 @@ class DQN(nn.Module):
         S = 1
         P = 1
         M = 16
-        Y = 16
+        Y = 8
         L = num_layers
 
         in_channels = [K] + [M] * (L - 1)

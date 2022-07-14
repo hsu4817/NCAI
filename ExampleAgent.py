@@ -8,6 +8,7 @@ import time
 import timeit
 import tty
 import importlib
+import statistics
 
 import gym
 
@@ -15,22 +16,14 @@ import nle  # noqa: F401
 from nle import nethack
 
 class ExampleAgent():
-    def __init__(self, FLAGS):
+    def __init__(self, FLAGS=None):
         self.flags = FLAGS
-
-        self.env = gym.make(
-            FLAGS.env,
-            savedir=FLAGS.savedir,
-            max_episode_steps=FLAGS.max_steps,
-            allow_all_yn_questions=True,
-            allow_all_modes=True,
-        )
 
     def go_back(self, num_lines):
         print("\033[%dA" % num_lines)
 
     def get_action(self):
-        raise NotImplementedError('Should implement get_action on example agent.')
+        raise NotImplementedError('Should implement get_action function')
 
     def run_episodes(self):
         env = self.env
@@ -147,3 +140,69 @@ class ExampleAgent():
 
     def preprocess_map(self, obs):
         raise NotImplementedError('Should implement preprocess_map if you need.')
+    
+    def evaluate(self):
+        env = gym.make(
+            FLAGS.env,
+            allow_all_yn_questions=True,
+            allow_all_modes=True,
+        )
+        
+        obs = env.reset()
+
+        steps = 0
+        episodes = 0
+        reward = 0.0
+        action = None
+
+        mean_sps = 0
+        mean_reward = 0.0
+
+        total_start_time = timeit.default_timer()
+        start_time = total_start_time
+
+        rewards = []
+
+        while True:
+            action = self.get_action(env, obs)
+
+            if action is None:
+                break
+
+            obs, reward, done, info = env.step(action)
+            steps += 1
+
+            mean_reward += (reward - mean_reward) / steps
+
+            if not done:
+                continue
+
+            time_delta = timeit.default_timer() - start_time
+
+            print("Final reward:", reward)
+            print("End status:", info["end_status"].name)
+            print("Mean reward:", mean_reward)
+            print("Total reward:", mean_reward*steps)
+            rewards.append(mean_reward*steps)
+
+            sps = steps / time_delta
+            print("Episode: %i. Steps: %i. SPS: %f" % (episodes, steps, sps))
+
+            episodes += 1
+            mean_sps += (sps - mean_sps) / episodes
+
+            start_time = timeit.default_timer()
+
+            steps = 0
+            mean_reward = 0.0
+
+            if episodes == 100:
+                break
+            
+            obs = env.reset()
+
+        env.close()
+        print(
+            "Finished after %i episodes and %f seconds, Mean sps: %f, Avg reward: %f, Median reward: %f"
+            % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(rewards)/episodes, statistics.median(rewards))
+        )

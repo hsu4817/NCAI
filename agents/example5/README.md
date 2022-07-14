@@ -4,7 +4,7 @@
 
 <img src="../../pics/qlearning.png"/>
 
-Q-Learning은 추후 소개할 Actor-critic과 더불어 대표적인 model-free algorithm이다. Model-free algorithm이란, 환경에 대한 정보가 사전에 주어지지 않아 매시간 action을 통해 외부로부터 state, reward를 받아오는 알고리즘을 의미한다. 환경에 대한 정보가 없기 때문에 exploration을 통한 trial and error를 거치면서 reward를 최대로 하는 policy를 점차 학습한다. Q-Learning은 Finite Markov Decision Process를 기반으로 agent가 특정 state에 특정 action을 하라는 최적의 policy를 배우는 것으로, 현재 state에서 모든 sequential 단계를 거쳤을 때 전체 reward의 예측값을 최대화하는 action을 선택할 수 있도록 한다. Q-Learning에서는 Q-Table을 만들어 agent가 경험을 쌓아가면서 일정 주기마다 각 state에서의 Q 값을 갱신해 나가고, 최종적으로 최적의 Q-Table을 완성한다.
+Q-Learning은 추후 소개할 Actor-critic과 더불어 대표적인 model-free algorithm이다. Model-free algorithm이란, 환경에 대한 정보가 사전에 주어지지 않아 매시간 action을 통해 외부로부터 state, reward를 받아오는 알고리즘을 의미한다. 환경에 대한 정보가 없기 때문에 exploration을 통한 trial and error를 거치면서 reward를 최대로 하는 policy를 점차 학습한다. Q-Learning은 Finite Markov Decision Process를 기반으로 agent가 특정 state에 특정 action을 하라는 최적의 policy를 배우는 것으로, 현재 state에서 모든 sequential 단계를 거쳤을 때 전체 reward의 예측값을 최대화하는 action을 선택할 수 있도록 한다. Q-Learning에서는 Q-Table을 만들어 agent가 경험을 쌓아가면서 일정 주기마다 각 state에서의 Q 값을 갱신해 나가고, 최종적으로 최적의 Q-Table을 완성한다. 이후 어떤 state에서 action을 선택할 때는 Q-Table에서 최대의 Q 값을 갖는 action을 선택하도록 한다. 그러나 학습 과정에서 처음부터 Q-Table에서 최대의 Q 값을 갖는 action만을 선택한다면 agent는 global optimum이 아닌 local optimum에 빠질 확률이 굉장히 높아진다. 따라서 Q-Learning에서는 exploration을 충분히 보장하기 위해 epsilon-greedy policy를 사용한다. Epsilon-greedy policy는 epsilon이라는 확률에 따라 최대의 Q 값을 갖는 action을 선택(exploitation)하거나 random action을 선택(exploration)하는 정책을 의미한다.
 
 <img src="../../pics/dqn.png"/>
 

@@ -5,6 +5,8 @@ from torch import nn
 import numpy as np
 import math
 
+import gym
+
 from ExampleAgent import ExampleAgent
 from .dqn import ReplayBuffer, DQN
 from collections import deque
@@ -14,8 +16,16 @@ writer = SummaryWriter()
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent(ExampleAgent):
-    def __init__(self, FLAGS):
+    def __init__(self, FLAGS=None):
         super().__init__(FLAGS)
+
+        self.env = gym.make(
+            FLAGS.env,
+            savedir=FLAGS.savedir,
+            max_episode_steps=FLAGS.max_steps,
+            allow_all_yn_questions=True,
+            allow_all_modes=True,
+        )
 
         self.buffer_size = 5000
         self.batch_size = 64
@@ -127,12 +137,12 @@ class Agent(ExampleAgent):
                     print("Elapsed Steps: {}%".format((time_step)/self.flags.max_steps*100))
                     print("Episodes: {}".format(num_episodes))
                     print("Last 100 Episode Mean Score: {}".format(sum(episode_scores)/len(episode_scores) if episode_scores else 0))
-                    print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 0))
-                    print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv) if episode_explv else 0))
+                    print("Last 100 Episode Mean Dungeon Lv: {}".format(sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 1))
+                    print("Last 100 Episode Mean Exp Lv: {}".format(sum(episode_explv)/len(episode_explv) if episode_explv else 1))
                     print("Last 100 Episode Mean Step: {}".format(sum(episode_steps)/len(episode_steps) if episode_steps else 0))
                     print()
                     
                     writer.add_scalar('Last 100 Episode Mean Score', sum(episode_scores)/len(episode_scores) if episode_scores else 0, time_step+1)
-                    writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 0, time_step+1)
-                    writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv) if episode_explv else 0, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Dungeon Lv', sum(episode_dungeonlv)/len(episode_dungeonlv) if episode_dungeonlv else 1, time_step+1)
+                    writer.add_scalar('Last 100 Episode Mean Exp Lv', sum(episode_explv)/len(episode_explv) if episode_explv else 1, time_step+1)
                     writer.add_scalar('Last 100 Episode Mean Step', sum(episode_steps)/len(episode_steps) if episode_steps else 0, time_step+1)

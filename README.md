@@ -2,6 +2,7 @@
 - [What is NetHack?](#what-is-nethack)
 - [What is NetHack Learning Environment?](#what-is-nethack-learning-environment)
 - [About NLE](#about-nle)
+- [Evaluation](#evaluation)
 - [Appendix](#appendix)
 - [Reference](#reference)
 
@@ -187,6 +188,22 @@ NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다�
 |Oracle|넷핵의 게임 요소인 Oracle을 찾으면 reward를 획득한다.|
 
 앞으로의 예제에서는 가장 기본적인 `NetHackScore-v0`을 사용하여 강화학습을 구현해 볼 것이다. 여기까지 정독을 완료했다면, 이제 예제를 보며 NLE와 친해지는 시간을 가져보도록 하자.
+
+# Evaluation
+
+제출한 agent의 성능 평가는 개별 참가 팀이 각자의 저장소(github repository)에 자신들이 구현한 agent를 push하면, 평가 시스템에서 이를 clone하여 평가하고 결과를 도출하도록 한다. 운영진에서는 결과 확인 후 일정 주기마다 본 저장소에 이를 공표한다. 모든 저장소는 비공개(private)를 원칙으로 하지만, 운영진이 평가 시스템으로 clone할 수 있도록 저장소를 운영진과 공유하도록 한다. 자세한 절차는 다음과 같다.
+
+1. 팀마다 비공개 저장소를 만들고, 구현한 agent를 push한다. 한 저장소에 여러 버전의 agent를 push하거나, 플랫폼 코드, 학습 코드, 실험용 코드 등 다른 코드가 포함되어 있어도 괜찮지만, 한 번에 하나의 agent만 평가된다. 평가하려는 agent에서 사용하는 서브 모듈이나 데이터는 모두 ```agent.py```와 같은 폴더 안에 있어야 하며, 상대 경로로만 모듈을 import하거나 파일을 읽을 수 있다. 경로가 변경될 수 있으므로 절대 경로를 사용하는 것은 지양하도록 한다.
+
+2. 아래처럼 평가하려는 {agent 이름 or 팀 이름}: {agent.py 파일 경로} 형식으로 ```agent_path.yaml``` 파일을 작성/수정하여 저장소에 추가한다.
+
+``` bash
+Example7: agents/example7/agent.py
+```
+
+3. 운영진에게 저장소의 접근 권한을 공유한다.
+
+운영진은 평가 시스템을 주기적으로 실행하여 저장소에서 최신 agent를 clone하여 평가한다. 평가 결과는 NCF2022 저장소 eval_results 폴더에 저장한다. 구체적인 평가 스케쥴은 변경될 수 있지만, 일주일에 한번 이상 평가하는 것을 목표로 한다. 중간 결과는 최종 결과와 무관하다. 중간 결과는 주기적으로 삭제될 수 있다.
 
 # Appendix
 
