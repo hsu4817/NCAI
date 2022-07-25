@@ -62,7 +62,7 @@ class ExampleAgent():
 
             obs, reward, done, info = env.step(action)
             if FLAGS.use_lstm:
-                done_ = torch.from_numpy(np.expand_dims(done, axis=1)).float().to(device)
+                done_ = torch.from_numpy(done).float().to(device)
                 self.h_t, self.c_t = self.h_t*(1.0 - done_), self.c_t*(1.0 - done_)
             steps += 1
 
@@ -170,7 +170,7 @@ class ExampleAgent():
 
             obs, reward, done, info = env.step(action)
             if FLAGS.use_lstm:
-                done_ = torch.from_numpy(np.expand_dims(done, axis=1)).float().to(device)
+                done_ = torch.from_numpy(done).float().to(device)
                 self.h_t, self.c_t = self.h_t*(1.0 - done_), self.c_t*(1.0 - done_)
             steps += 1
 
