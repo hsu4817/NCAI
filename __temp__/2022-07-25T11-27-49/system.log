@@ -1,8 +1,0 @@
-__temp__.2022-07-25T11-27-49.team.gud0824.agents.example7.agent
-Traceback (most recent call last):
-  File "/home/wogud9019/NCF2022/eval/run.py", line 87, in play_games
-    result, log_buff = run_play_game(
-  File "/home/wogud9019/NCF2022/eval/play_game.py", line 55, in run_play_game
-    return result, log_buff
-NameError: name 'log_buff' is not defined
-
