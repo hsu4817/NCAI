@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 def run_play_game(agent, map_name, timeout, verbose):
 
     # agent example -> agents.my_agent
-    cmd = f"python -m eval.play_game --agent={agent} --map_name={map_name}"
+    cmd = f"python -m eval.play_game --agent={agent} --env={map_name}"
 
-    result = [0.5, 0.5, 0.0, ""]
+    result = [0.0, 0.0, ""]
     remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
     while remain > 0:
         remain -= 1
@@ -33,6 +33,7 @@ def run_play_game(agent, map_name, timeout, verbose):
                 stderr=subprocess.PIPE,
                 timeout=timeout,
             )
+            print(pout)
 
             stdout_lines = pout.stdout.split(b"\n")
             stdout_lines = [line.rstrip().decode("utf-8") for line in stdout_lines]
@@ -54,14 +55,14 @@ def run_play_game(agent, map_name, timeout, verbose):
     return result, log_buff
 
 
-def play_game(agent, map_name):
+def play_game(args):
     # agent 초기화
     try:
-        module = agent + ".agent"
+        module = args.agent
         name = "Agent"
-        agent = getattr(importlib.import_module(module), name)()
+        agent = getattr(importlib.import_module(module), name)(args)
 
-        result = agent.evaluate()
+        result = agent.evaluate(args)
     
     # except (AttributeError, ImportError):
     except Exception as e:
@@ -76,11 +77,32 @@ def play_game(agent, map_name):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser("NC Fellowship 2022-play_game")
-    parser.add_argument("--agent", type=str)
-    parser.add_argument("--map_name", type=str, default="NetHackScore-v0")
+    parser.add_argument(
+        "--agent",
+        type=str,
+    )
+    parser.add_argument(
+        "--env",
+        type=str,
+        default="NetHackScore-v0",
+    )
+    parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=1_000_000,
+    )
+    parser.add_argument(
+        "--savedir",
+        default="nle_data/play_data",
+    )
+    parser.add_argument(
+        "--mode",
+        type=str,
+        default="test",
+        choices=["test", "train"],
+        help="Test or train. Defaults to 'test'",
+    )
     
     args = parser.parse_args()
 
-    result = play_game(
-        args.agent, args.map_name,
-    )
+    result = play_game(args)

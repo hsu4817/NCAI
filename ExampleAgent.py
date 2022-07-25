@@ -141,12 +141,8 @@ class ExampleAgent():
     def preprocess_map(self, obs):
         raise NotImplementedError('Should implement preprocess_map if you need.')
     
-    def evaluate(self):
-        env = gym.make(
-            FLAGS.env,
-            allow_all_yn_questions=True,
-            allow_all_modes=True,
-        )
+    def evaluate(self, FLAGS):
+        env = self.env
         
         obs = env.reset()
 
@@ -202,7 +198,8 @@ class ExampleAgent():
             obs = env.reset()
 
         env.close()
-        print(
-            "Finished after %i episodes and %f seconds, Mean sps: %f, Avg reward: %f, Median reward: %f"
-            % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(rewards)/episodes, statistics.median(rewards))
-        )
+
+        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg reward: %f, Median reward: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(rewards)/episodes, statistics.median(rewards))
+        print(ret)
+
+        return ret

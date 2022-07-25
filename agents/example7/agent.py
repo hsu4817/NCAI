@@ -21,14 +21,6 @@ class Agent(ExampleAgent):
 
         self.num_envs = 32
         self.max_steps_per_episode = 80
-        self.env = gym.vector.make(
-            FLAGS.env,
-            savedir=FLAGS.savedir,
-            max_episode_steps=FLAGS.max_steps,
-            allow_all_yn_questions=True,
-            allow_all_modes=True,
-            num_envs=self.num_envs,
-        )
 
         self.gamma = 0.999
         self.closs_coef = 0.5
@@ -36,9 +28,6 @@ class Agent(ExampleAgent):
 
         self.a2c_lstm = A2C_LSTM().to(device)
         self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
-
-        self.h_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
-        self.c_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
         
         self.path = './agents/example7/policy.pt'
         if self.flags.mode != 'train':
@@ -51,6 +40,22 @@ class Agent(ExampleAgent):
                 allow_all_yn_questions=True,
                 allow_all_modes=True,
             )
+
+            self.h_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.c_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+        else:
+            self.env = gym.vector.make(
+                FLAGS.env,
+                savedir=FLAGS.savedir,
+                max_episode_steps=FLAGS.max_steps,
+                allow_all_yn_questions=True,
+                allow_all_modes=True,
+                num_envs=self.num_envs,
+            )
+
+            self.h_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.c_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+
 
     def get_action(self, env, obs):
         actor, critic = self.get_actor_critic(env, obs)

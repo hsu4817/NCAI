@@ -5,3 +5,5 @@ __pycache__/
 nle_data/
 
 runs/
+
+__temp__/

@@ -30,6 +30,7 @@ def update_team_repo(config):
 
         logger.info(f"{name}: {user_id}/{repo_name}")
         if not out_dir.exists():
+            #Github CLI 설치 필요
             cmd = f"gh repo clone {user_id}/{repo_name} {out_dir}"
             logger.info(f"RUN {cmd}")
             ret = subprocess.call(shlex.split(cmd))
@@ -51,7 +52,7 @@ def update_team_repo(config):
                     )
                     exit(1)
                 agent_file = team.temp_dir / name_agent_class[name].strip()
-                agent_class = f"{agent_file.parent}/{agent_file.stem}/Agent".replace("/", ".")
+                agent_class = f"{agent_file.parent}/{agent_file.stem}".replace("/", ".")
                 team.class_path = agent_class
                 logger.info(f"{name} 업데이트 성공")
             else:
@@ -65,7 +66,7 @@ def update_team_repo(config):
 
 
 def play_games(config, run_start, run_end, verbose):
-    config.replay_dir.mkdir(exist_ok=True, parents=True)
+    config.data_dir.mkdir(exist_ok=True, parents=True)
 
     # 게임 생성
     team_list = config.teams
@@ -74,12 +75,16 @@ def play_games(config, run_start, run_end, verbose):
     for n in trange(run_start, run_end):
         for team in tqdm(team_list, leave=False):
             agent = config.teams[team].class_path
+
+            log_path = config.data_dir / f"{team}-{n}.log"
+            log_path.parent.mkdir(exist_ok=True, parents=True)
+
             map_name = config.args.map_name
             timeout = config.args.timeout
 
             start = time.monotonic()
             try:
-                result = run_play_game(
+                result, log_buff = run_play_game(
                     agent, map_name, timeout, verbose,
                 )
                 if verbose:
@@ -93,7 +98,7 @@ def play_games(config, run_start, run_end, verbose):
                     tqdm.write(colored(f"     : {result[-1]}", *color))
 
             except Exception as e:
-                result = [0.0, 0.0, 1.0]
+                result = [0.0, 0.0, "Error"]
                 with open(config.system_log_file, "at") as f:
                     f.write(f"{agent}\n")
                     f.write(f"{traceback.format_exc()}\n")
@@ -123,6 +128,26 @@ def play_games(config, run_start, run_end, verbose):
 
             time.sleep(3)
 
+def write_out_file(config):
+    config.out_file.parent.mkdir(parents=True, exist_ok=True)
+    data_dir = config.out_dir / config.out_dir.name
+
+    lines = []
+    for log in data_dir.glob("**/*.log"):
+        last_line = log.read_text().splitlines()[-1]
+        _, t = last_line.rsplit(",", 1)
+        lines.append((datatime.fromisoformat(t), last_line))
+    lines = sorted(lines)
+    lines = [line for _, line in lines]
+    config.out_file.write_text("\n".join(lines))
+
+def merge_result(config):
+    if config.system_log_file.exists():
+        dst = config.out_dir / config.system_log_file.name
+        dst.write_text(config.system_log_file.read_text())
+    
+    write_out_file(config)
+
 if __name__ == "__main__":
 
     """
@@ -148,13 +173,13 @@ if __name__ == "__main__":
         config = update_team_repo(config)
 
         # 게임 시작/종료 번호 식별
-        round_start = 0 if len(df) == 0 else df["run"].max() + 1
-        round_end = round_start + args.rounds
+        run_start = 0 if len(df) == 0 else df["run"].max() + 1
+        run_end = run_start + args.runs
         
-        # 토너먼트 시작
-        logger.info(f"토너먼트 시작 {round_start} <= run < {round_end}")
-        play_games(config, round_start, round_end, verbose=config.verbose)
-        write_out_file(config)
+        # 평가 시작
+        logger.info(f"평가 시작 {run_start} <= run < {run_end}")
+        play_games(config, run_start, run_end, verbose=config.verbose)
+        merge_result(config)
 
     if args.export_results:
         logger.info(f"결과 분석 및 문서 생성")

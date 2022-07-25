@@ -21,14 +21,6 @@ class Agent(ExampleAgent):
 
         self.num_envs = 32
         self.max_steps_per_episode = 80
-        self.env = gym.vector.make(
-            FLAGS.env,
-            savedir=FLAGS.savedir,
-            max_episode_steps=FLAGS.max_steps,
-            allow_all_yn_questions=True,
-            allow_all_modes=True,
-            num_envs=self.num_envs,
-        )
 
         self.gamma = 0.999
         self.closs_coef = 0.5
@@ -47,6 +39,16 @@ class Agent(ExampleAgent):
                 max_episode_steps=FLAGS.max_steps,
                 allow_all_yn_questions=True,
                 allow_all_modes=True,
+            )
+        
+        else:
+            self.env = gym.vector.make(
+                FLAGS.env,
+                savedir=FLAGS.savedir,
+                max_episode_steps=FLAGS.max_steps,
+                allow_all_yn_questions=True,
+                allow_all_modes=True,
+                num_envs=self.num_envs,
             )
 
     def get_action(self, env, obs):

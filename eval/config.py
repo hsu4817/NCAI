@@ -3,6 +3,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from toolbox.config_loader import ConfigLoader
+
 logger = logging.getLogger(__name__)
 
 #
@@ -56,9 +58,11 @@ out_dir = args.out_dir
 out_dir.mkdir(parents=True, exist_ok=True)
 
 # 평가용 에이전트와 결과가 저장되는 폴더
-bot_path_file = "bot_path.yaml"
+agent_path_file = "agent_path.yaml"
 
 team_dir = temp_dir / "team"
+data_dir = temp_dir / "data"
+system_log_file = temp_dir / "system.log"
 result_file = temp_dir / "result.csv"
 
 summary_dir = out_dir / "summary"
