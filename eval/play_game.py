@@ -33,7 +33,8 @@ def run_play_game(agent, map_name, timeout, verbose):
                 stderr=subprocess.PIPE,
                 timeout=timeout,
             )
-            print(pout)
+            print(pout.stdout)
+            print(pout.stderr)
 
             stdout_lines = pout.stdout.split(b"\n")
             stdout_lines = [line.rstrip().decode("utf-8") for line in stdout_lines]
@@ -101,6 +102,11 @@ if __name__ == "__main__":
         default="test",
         choices=["test", "train"],
         help="Test or train. Defaults to 'test'",
+    )
+    parser.add_argument(
+        "--use_lstm",
+        action="store_true",
+        help="Use LSTM in agent model."
     )
     
     args = parser.parse_args()

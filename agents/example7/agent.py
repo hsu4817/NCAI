@@ -149,8 +149,6 @@ class Agent(ExampleAgent):
                 rewards.append(np.tanh(reward/100))
                 dones.append(np.array(done, dtype=int))
 
-                
-
                 for i in range(self.num_envs):
                     if done[i]:
                         num_episodes += 1

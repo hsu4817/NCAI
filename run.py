@@ -79,6 +79,11 @@ def main():
         choices=["test", "train"],
         help="Test or train. Defaults to 'test'",
     )
+    parser.add_argument(
+        "--use_lstm",
+        action="store_true",
+        help="Use LSTM in agent model."
+    )
 
     global FLAGS
     FLAGS = parser.parse_args()
