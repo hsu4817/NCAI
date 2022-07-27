@@ -41,8 +41,8 @@ class Agent(ExampleAgent):
                 allow_all_modes=True,
             )
 
-            self.h_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
-            self.c_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.h_t = torch.zeros(1, 512).clone()
+            self.c_t = torch.zeros(1, 512).clone()
         else:
             self.env = gym.vector.make(
                 FLAGS.env,

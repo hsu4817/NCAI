@@ -62,8 +62,8 @@ class ExampleAgent():
 
             obs, reward, done, info = env.step(action)
             if FLAGS.use_lstm and done:
-                self.h_t = torch.zeros(1, 512).clone().to(device)
-                self.c_t = torch.zeros(1, 512).clone().to(device)
+                self.h_t = torch.zeros(1, 512).clone()
+                self.c_t = torch.zeros(1, 512).clone()
             steps += 1
 
             mean_reward += (reward - mean_reward) / steps
@@ -170,8 +170,8 @@ class ExampleAgent():
 
             obs, reward, done, info = env.step(action)
             if FLAGS.use_lstm and done:
-                self.h_t = torch.zeros(1, 512).clone().to(device)
-                self.c_t = torch.zeros(1, 512).clone().to(device)
+                self.h_t = torch.zeros(1, 512).clone()
+                self.c_t = torch.zeros(1, 512).clone()
             steps += 1
 
             mean_reward += (reward - mean_reward) / steps
