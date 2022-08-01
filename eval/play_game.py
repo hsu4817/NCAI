@@ -33,8 +33,6 @@ def run_play_game(agent, map_name, timeout, verbose):
                 stderr=subprocess.PIPE,
                 timeout=timeout,
             )
-            print(pout.stdout)
-            print(pout.stderr)
 
             stdout_lines = pout.stdout.split(b"\n")
             stdout_lines = [line.rstrip().decode("utf-8") for line in stdout_lines]

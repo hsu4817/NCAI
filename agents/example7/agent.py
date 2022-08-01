@@ -13,7 +13,6 @@ from collections import deque
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent(ExampleAgent):
     def __init__(self, FLAGS=None):
@@ -25,13 +24,13 @@ class Agent(ExampleAgent):
         self.gamma = 0.999
         self.closs_coef = 0.5
         self.eloss_coef = 0.0006
-
-        self.a2c_lstm = A2C_LSTM().to(device)
-        self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
         
         self.path = './agents/example7/policy.pt'
         if self.flags.mode != 'train':
+            self.device = torch.device("cpu")
+            self.a2c_lstm = A2C_LSTM().to(self.device)
             self.a2c_lstm.load_state_dict(torch.load(self.path))
+            self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
 
             self.env = gym.make(
                 FLAGS.env,
@@ -41,9 +40,13 @@ class Agent(ExampleAgent):
                 allow_all_modes=True,
             )
 
-            self.h_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
-            self.c_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.h_t = torch.zeros(1, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
+            self.c_t = torch.zeros(1, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
         else:
+            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+            self.a2c_lstm = A2C_LSTM().to(self.device)
+            self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
+            
             self.env = gym.vector.make(
                 FLAGS.env,
                 savedir=FLAGS.savedir,
@@ -53,8 +56,8 @@ class Agent(ExampleAgent):
                 num_envs=self.num_envs,
             )
 
-            self.h_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
-            self.c_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.h_t = torch.zeros(self.num_envs, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
+            self.c_t = torch.zeros(self.num_envs, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
 
 
     def get_action(self, env, obs):
@@ -71,18 +74,18 @@ class Agent(ExampleAgent):
     
     def get_actor_critic(self, env, obs):
         if self.flags.mode != 'train':
-            observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
-            observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
+            observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(self.device)
+            observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(self.device)
         else:
-            observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(device)
-            observed_stats = torch.from_numpy(obs['blstats']).float().to(device)
+            observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(self.device)
+            observed_stats = torch.from_numpy(obs['blstats']).float().to(self.device)
 
         actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
         return actor, critic
     
     def optimize_td_loss(self, actors, actions, critics, returns):
-        actors = torch.cat(actors).to(device)
-        actions = torch.cat(actions).to(device)
+        actors = torch.cat(actors).to(self.device)
+        actions = torch.cat(actions).to(self.device)
 
         returns = torch.cat(returns)
         critics = torch.cat(critics)        
@@ -140,7 +143,7 @@ class Agent(ExampleAgent):
 
                 new_obs, reward, done, info = env.step(action)
                 
-                done_ = torch.from_numpy(np.expand_dims(done, axis=1)).float().to(device)
+                done_ = torch.from_numpy(np.expand_dims(done, axis=1)).float().to(self.device)
                 self.h_t, self.c_t = self.h_t*(1.0 - done_), self.c_t*(1.0 - done_)
 
                 actors.append(actor)
@@ -167,8 +170,8 @@ class Agent(ExampleAgent):
                         returns = []
                         r = new_critic.squeeze()
                         for t in reversed(range(len(rewards))):
-                            reward = torch.from_numpy(rewards[t]).to(device)
-                            done = torch.from_numpy(dones[t]).to(device)
+                            reward = torch.from_numpy(rewards[t]).to(self.device)
+                            done = torch.from_numpy(dones[t]).to(self.device)
 
                             r = reward + self.gamma * r * (1.0 - done)
                             returns.insert(0, r)

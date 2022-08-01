@@ -152,7 +152,7 @@ if __name__ == "__main__":
 
     """
     # 플레이, 분석, 결과 출력
-    python -m eval.run --rounds=5
+    python -m eval.run --runs=5
     # 플레이 안하고, 결과 분석만 실행
     python -m eval.run --play_games=false --export_results=true
     """
