@@ -71,21 +71,21 @@ class Agent(ExampleAgent):
     
     def get_actor_critic(self, env, obs):
         if self.flags.mode != 'train':
-            observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(self.device)
-            observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(self.device)
+            observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
+            observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
 
             with torch.no_grad():
                 actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
         else:
-            observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(self.device)
-            observed_stats = torch.from_numpy(obs['blstats']).float().to(self.device)
+            observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(device)
+            observed_stats = torch.from_numpy(obs['blstats']).float().to(device)
 
             actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
         return actor, critic
     
     def optimize_td_loss(self, actors, actions, critics, returns):
-        actors = torch.cat(actors).to(self.device)
-        actions = torch.cat(actions).to(self.device)
+        actors = torch.cat(actors).to(device)
+        actions = torch.cat(actions).to(device)
 
         returns = torch.cat(returns)
         critics = torch.cat(critics)        
@@ -143,7 +143,7 @@ class Agent(ExampleAgent):
 
                 new_obs, reward, done, info = env.step(action)
                 
-                done_ = torch.from_numpy(np.expand_dims(done, axis=1)).float().to(self.device)
+                done_ = torch.from_numpy(np.expand_dims(done, axis=1)).float().to(device)
                 self.h_t, self.c_t = self.h_t*(1.0 - done_), self.c_t*(1.0 - done_)
 
                 actors.append(actor)
@@ -170,8 +170,8 @@ class Agent(ExampleAgent):
                         returns = []
                         r = new_critic.squeeze()
                         for t in reversed(range(len(rewards))):
-                            reward = torch.from_numpy(rewards[t]).to(self.device)
-                            done = torch.from_numpy(dones[t]).to(self.device)
+                            reward = torch.from_numpy(rewards[t]).to(device)
+                            done = torch.from_numpy(dones[t]).to(device)
 
                             r = reward + self.gamma * r * (1.0 - done)
                             returns.insert(0, r)
