@@ -72,7 +72,7 @@ def play_game(args):
         name = "Agent"
         agent = getattr(importlib.import_module(module), name)(args)
 
-        result = agent.evaluate(args)
+        result = agent.evaluate()
     
     # except (AttributeError, ImportError):
     except Exception as e:
@@ -99,7 +99,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max-steps",
         type=int,
-        default=1_000_000,
+        default=2_560,
     )
     parser.add_argument(
         "--savedir",

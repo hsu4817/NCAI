@@ -61,14 +61,13 @@ class ExampleAgent():
                 break
 
             obs, reward, done, info = env.step(action)
-            if FLAGS.use_lstm and done:
-                self.h_t = torch.zeros(1, 512).clone()
-                self.c_t = torch.zeros(1, 512).clone()
+            if self.flags.use_lstm:
+                self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
             mean_reward += (reward - mean_reward) / steps
 
-            if not done:
+            if not done and steps < self.flags.max_steps:
                 continue
 
             time_delta = timeit.default_timer() - start_time
@@ -144,7 +143,7 @@ class ExampleAgent():
     def preprocess_map(self, obs):
         raise NotImplementedError('Should implement preprocess_map if you need.')
     
-    def evaluate(self, FLAGS):
+    def evaluate(self):
         env = self.env
         
         obs = env.reset()
@@ -169,9 +168,8 @@ class ExampleAgent():
                 break
 
             obs, reward, done, info = env.step(action)
-            if FLAGS.use_lstm and done:
-                self.h_t = torch.zeros(1, 512).clone()
-                self.c_t = torch.zeros(1, 512).clone()
+            if self.flags.use_lstm:
+                self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
             mean_reward += (reward - mean_reward) / steps
