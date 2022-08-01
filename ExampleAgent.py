@@ -181,14 +181,9 @@ class ExampleAgent():
 
             time_delta = timeit.default_timer() - start_time
 
-            print("Final reward:", reward)
-            print("End status:", info["end_status"].name)
-            print("Mean reward:", mean_reward)
-            print("Total reward:", mean_reward*steps)
             rewards.append(mean_reward*steps)
 
             sps = steps / time_delta
-            print("Episode: %i. Steps: %i. SPS: %f" % (episodes, steps, sps))
 
             episodes += 1
             mean_sps += (sps - mean_sps) / episodes
