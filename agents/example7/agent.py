@@ -13,6 +13,7 @@ from collections import deque
 
 from torch.utils.tensorboard import SummaryWriter
 writer = SummaryWriter()
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent(ExampleAgent):
     def __init__(self, FLAGS=None):
@@ -24,13 +25,13 @@ class Agent(ExampleAgent):
         self.gamma = 0.999
         self.closs_coef = 0.5
         self.eloss_coef = 0.0006
+
+        self.a2c_lstm = A2C_LSTM().to(device)
+        self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
         
         self.path = './agents/example7/policy.pt'
         if self.flags.mode != 'train':
-            self.device = torch.device("cpu")
-            self.a2c_lstm = A2C_LSTM().to(self.device)
             self.a2c_lstm.load_state_dict(torch.load(self.path))
-            self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
 
             self.env = gym.make(
                 FLAGS.env,
@@ -40,13 +41,9 @@ class Agent(ExampleAgent):
                 allow_all_modes=True,
             )
 
-            self.h_t = torch.zeros(1, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
-            self.c_t = torch.zeros(1, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
+            self.h_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.c_t = torch.zeros(1, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
         else:
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            self.a2c_lstm = A2C_LSTM().to(self.device)
-            self.optimizer = torch.optim.Adam(self.a2c_lstm.parameters())
-            
             self.env = gym.vector.make(
                 FLAGS.env,
                 savedir=FLAGS.savedir,
@@ -56,8 +53,8 @@ class Agent(ExampleAgent):
                 num_envs=self.num_envs,
             )
 
-            self.h_t = torch.zeros(self.num_envs, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
-            self.c_t = torch.zeros(self.num_envs, 512).clone().to(self.device) #lstm cell의 dimension과 맞춰준다.
+            self.h_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
+            self.c_t = torch.zeros(self.num_envs, 512).clone().to(device) #lstm cell의 dimension과 맞춰준다.
 
 
     def get_action(self, env, obs):
