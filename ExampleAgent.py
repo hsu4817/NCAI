@@ -176,7 +176,7 @@ class ExampleAgent():
 
             mean_reward += (reward - mean_reward) / steps
 
-            if not done:
+            if not done and steps < self.flags.max_steps:
                 continue
 
             time_delta = timeit.default_timer() - start_time

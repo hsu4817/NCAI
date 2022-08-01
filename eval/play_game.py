@@ -20,6 +20,7 @@ def run_play_game(agent, map_name, timeout, verbose):
 
     result = [0.0, 0.0, ""]
     remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
+    log_buff = []
     while remain > 0:
         remain -= 1
 
@@ -36,6 +37,16 @@ def run_play_game(agent, map_name, timeout, verbose):
 
             stdout_lines = pout.stdout.split(b"\n")
             stdout_lines = [line.rstrip().decode("utf-8") for line in stdout_lines]
+            stderr_lines = pout.stderr.split(b"\n")
+            stderr_lines = [line.rstrip().decode("utf-8") for line in stderr_lines]
+            lines = (
+                [f"{cmd}\n\n"]
+                + ["## STDOUT ##\n"]
+                + stdout_lines
+                + ["\n## STDERR ##\n"]
+                + stderr_lines
+            )
+            log_buff += lines
 
             for line in stdout_lines:
                 if 'Finished after' in line:
