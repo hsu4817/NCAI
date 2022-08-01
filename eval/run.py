@@ -88,19 +88,18 @@ def play_games(config, run_start, run_end, verbose):
                 result, log_buff = run_play_game(
                     agent, map_name, use_lstm, timeout, verbose,
                 )
-                print('here2')
+
                 if verbose:
                     color = ("grey", "on_yellow")
                     tqdm.write(
                         colored(
-                            f"Run: {n}, {agent}: {result[0]}, {result[1]}, error: {result[2]}",
+                            f"Run: {n}, {agent}: {result[0]}, {result[1]}",
                             *color,
                         )
                     )
-                    tqdm.write(colored(f"     : {result[-1]}", *color))
 
             except Exception as e:
-                result = [0.0, 0.0, "Error"]
+                result = [0.0, 0.0]
                 with open(config.system_log_file, "at") as f:
                     f.write(f"{agent}\n")
                     f.write(f"{traceback.format_exc()}\n")
@@ -119,7 +118,6 @@ def play_games(config, run_start, run_end, verbose):
                             map_name,
                             result[0],
                             result[1],
-                            result[2],
                             play_time,
                             datetime.now().isoformat(),
                         ],
