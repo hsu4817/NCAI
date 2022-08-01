@@ -41,7 +41,7 @@ class ExampleAgent():
         total_start_time = timeit.default_timer()
         start_time = total_start_time
 
-        rewards = []
+        scores = []
 
         while True:
             if not self.flags.no_render:
@@ -54,6 +54,7 @@ class ExampleAgent():
                 print("-" * 8)
                 print(obs["blstats"])
                 self.go_back(num_lines=33)
+            old_score = obs[9]
 
             action = self.get_action(env, obs)
 
@@ -65,18 +66,14 @@ class ExampleAgent():
                 self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
-            mean_reward += (reward - mean_reward) / steps
-
             if not done and steps < self.flags.max_steps:
                 continue
 
             time_delta = timeit.default_timer() - start_time
 
-            print("Final reward:", reward)
             print("End status:", info["end_status"].name)
-            print("Mean reward:", mean_reward)
-            print("Total reward:", mean_reward*steps)
-            rewards.append(mean_reward*steps)
+            print("Total Score:", old_score)
+            scores.append(old_score)
 
             sps = steps / time_delta
             print("Episode: %i. Steps: %i. SPS: %f" % (episodes, steps, sps))
@@ -87,7 +84,6 @@ class ExampleAgent():
             start_time = timeit.default_timer()
 
             steps = 0
-            mean_reward = 0.0
 
             if episodes == self.flags.ngames:
                 break
@@ -95,10 +91,8 @@ class ExampleAgent():
             obs = env.reset()
 
         env.close()
-        print(
-            "Finished after %i episodes and %f seconds. Mean sps: %f. Avg reward: %f"
-            % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(rewards)/episodes)
-        )
+        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(scores)/episodes, statistics.median(scores))
+        print(ret)
     
     def is_more(self, screen):
         for line in screen:
@@ -159,9 +153,11 @@ class ExampleAgent():
         total_start_time = timeit.default_timer()
         start_time = total_start_time
 
-        rewards = []
+        scores = []
 
         while True:
+            old_score = obs[9]
+
             action = self.get_action(env, obs)
 
             if action is None:
@@ -172,15 +168,11 @@ class ExampleAgent():
                 self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
-            mean_reward += (reward - mean_reward) / steps
-
             if not done and steps < self.flags.max_steps:
                 continue
 
             time_delta = timeit.default_timer() - start_time
-
-            rewards.append(mean_reward*steps)
-
+            scores.append(old_score)
             sps = steps / time_delta
 
             episodes += 1
@@ -189,7 +181,6 @@ class ExampleAgent():
             start_time = timeit.default_timer()
 
             steps = 0
-            mean_reward = 0.0
 
             if episodes == 100:
                 break
@@ -198,7 +189,7 @@ class ExampleAgent():
 
         env.close()
 
-        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg reward: %f, Median reward: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(rewards)/episodes, statistics.median(rewards))
+        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(scores)/episodes, statistics.median(scores))
         print(ret)
 
         return ret

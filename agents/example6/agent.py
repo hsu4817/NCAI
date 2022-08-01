@@ -67,11 +67,14 @@ class Agent(ExampleAgent):
         if self.flags.mode != 'train':
             observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
             observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
+
+            with torch.no_grad():
+                actor, critic = self.a2c(observed_glyphs, observed_stats)
         else:
             observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(device)
             observed_stats = torch.from_numpy(obs['blstats']).float().to(device)
 
-        actor, critic = self.a2c(observed_glyphs, observed_stats)
+            actor, critic = self.a2c(observed_glyphs, observed_stats)
         return actor, critic
     
     def optimize_td_loss(self, actors, actions, critics, returns):

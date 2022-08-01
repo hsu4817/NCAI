@@ -37,25 +37,23 @@ def run_play_game(agent, map_name, timeout, verbose):
             print(pout.stdout)
             print(pout.stderr)
 
-            stdout_lines = pout.stdout.split(b"\n")
-            stdout_lines = [line.rstrip().decode("utf-8") for line in stdout_lines]
-            stderr_lines = pout.stderr.split(b"\n")
-            stderr_lines = [line.rstrip().decode("utf-8") for line in stderr_lines]
+            stdout_line = pout.stdout.split(b"\n")
+            stdout_line = [line.rstrip().decode("utf-8") for line in stdout_lines]
+            stderr_line = pout.stderr.split(b"\n")
+            stderr_line = [line.rstrip().decode("utf-8") for line in stderr_lines]
             lines = (
                 [f"{cmd}\n\n"]
                 + ["## STDOUT ##\n"]
-                + stdout_lines
+                + stdout_line
                 + ["\n## STDERR ##\n"]
-                + stderr_lines
+                + stderr_line
             )
             log_buff += lines
 
-            for line in stdout_lines:
-                if 'Finished after' in line:
-                    result[0] = float(re.split('[, ]', line)[-5])
-                    result[1] = float(re.split('[, ]', line)[-1])
-                    result[2] = line
-                    break
+            result[0] = float(re.split('[, ]', stdout_line)[-5])
+            result[1] = float(re.split('[, ]', stdout_line)[-1])
+            result[2] = line
+            break
 
         except subprocess.TimeoutExpired:
             # 비정상적으로 게임이 종료된 경우
