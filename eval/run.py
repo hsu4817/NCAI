@@ -80,13 +80,15 @@ def play_games(config, run_start, run_end, verbose):
             log_path.parent.mkdir(exist_ok=True, parents=True)
 
             map_name = config.args.map_name
+            use_lstm = config.args.use_lstm
             timeout = config.args.timeout
 
             start = time.monotonic()
             try:
                 result, log_buff = run_play_game(
-                    agent, map_name, timeout, verbose,
+                    agent, map_name, use_lstm, timeout, verbose,
                 )
+                print('here2')
                 if verbose:
                     color = ("grey", "on_yellow")
                     tqdm.write(

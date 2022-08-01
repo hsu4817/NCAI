@@ -38,6 +38,7 @@ config_loader.update(
         # 게임 플레이 옵션
         runs=5,
         map_name="NetHackScore-v0",
+        use_lstm=True,
         timeout=1800,
         verbose=1,  # INFO까지 출력
     )

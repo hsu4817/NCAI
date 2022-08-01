@@ -13,10 +13,10 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def run_play_game(agent, map_name, timeout, verbose):
+def run_play_game(agent, map_name, use_lstm, timeout, verbose):
 
     # agent example -> agents.my_agent
-    cmd = f"python -m eval.play_game --agent={agent} --env={map_name}"
+    cmd = f"python -m eval.play_game --agent={agent} --env={map_name}" + " --use_lstm" if use_lstm else ""
 
     result = [0.0, 0.0, ""]
     remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
@@ -34,13 +34,11 @@ def run_play_game(agent, map_name, timeout, verbose):
                 stderr=subprocess.PIPE,
                 timeout=timeout,
             )
-            print(pout.stdout)
-            print(pout.stderr)
 
             stdout_line = pout.stdout.split(b"\n")
-            stdout_line = [line.rstrip().decode("utf-8") for line in stdout_lines]
+            stdout_line = stdout_line.rstrip().decode("utf-8")
             stderr_line = pout.stderr.split(b"\n")
-            stderr_line = [line.rstrip().decode("utf-8") for line in stderr_lines]
+            stderr_line = [line.rstrip().decode("utf-8") for line in stderr_line]
             lines = (
                 [f"{cmd}\n\n"]
                 + ["## STDOUT ##\n"]
@@ -49,10 +47,12 @@ def run_play_game(agent, map_name, timeout, verbose):
                 + stderr_line
             )
             log_buff += lines
-
+            
+            print(float(re.split('[, ]', stdout_line)))
             result[0] = float(re.split('[, ]', stdout_line)[-5])
             result[1] = float(re.split('[, ]', stdout_line)[-1])
-            result[2] = line
+            result[2] = stdout_line
+
             break
 
         except subprocess.TimeoutExpired:
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--use_lstm",
-        action="store_true",
+        action="store_false",
         help="Use LSTM in agent model."
     )
     
