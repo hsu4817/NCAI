@@ -113,7 +113,7 @@ def play_games(config, run_start, run_end, verbose):
                     map(
                         str,
                         [
-                            agent,
+                            team,
                             n,
                             map_name,
                             result[0],
@@ -130,18 +130,20 @@ def play_games(config, run_start, run_end, verbose):
 
 def write_out_file(config):
     config.out_file.parent.mkdir(parents=True, exist_ok=True)
-    data_dir = config.out_dir / config.out_dir.name
+    data_dir = config.out_dir / config.data_dir.name
 
     lines = []
     for log in data_dir.glob("**/*.log"):
         last_line = log.read_text().splitlines()[-1]
         _, t = last_line.rsplit(",", 1)
-        lines.append((datatime.fromisoformat(t), last_line))
+        lines.append((datetime.fromisoformat(t), last_line))
     lines = sorted(lines)
     lines = [line for _, line in lines]
     config.out_file.write_text("\n".join(lines))
 
 def merge_result(config):
+    shutil.copytree(config.data_dir, config.out_dir / config.data_dir.name, dirs_exist_ok=True)
+
     if config.system_log_file.exists():
         dst = config.out_dir / config.system_log_file.name
         dst.write_text(config.system_log_file.read_text())

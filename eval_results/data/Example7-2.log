@@ -1,0 +1,15 @@
+python -m eval.play_game --agent=__temp__.2022-08-01T22-48-36.team.gud0824.agents.example7.agent --env=NetHackScore-v0 --use_lstm
+
+
+## STDOUT ##
+
+Finished after 2 episodes and 21.959627 seconds, Mean sps: 307.929630, Avg score: 27.000000, Median score: 27.000000
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+__temp__.2022-08-01T22-48-36.team.gud0824.agents.example7.agent,2,NetHackScore-v0,27.0,27.0,25,2022-08-01T22:49:30.371386

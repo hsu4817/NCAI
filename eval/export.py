@@ -29,11 +29,16 @@ def export_results(config):
     run_end = df["run"].max()
 
     #
-    # 승률
+    # 평균 score의 평균(over 5 runs)
     #
-    df_score = df[["agent", "score"]].groupby("agent")
-    mean_score = df_score.mean()
-    median_score = df_score.median()
+    df_mean_score = df[["agent", "mean_score"]].groupby("agent")
+    mean_score = df_mean_score.mean()
+
+    #
+    # median score의 평균(over 5 runs)
+    #
+    df_med_score = df[["agent", "median_score"]].groupby("agent")
+    med_score = df_med_score.mean()
 
     #
     # 게임 플레이 시간
@@ -46,7 +51,7 @@ def export_results(config):
     #
     kv = {
         "mean score": mean_score,
-        "median score": median_score,
+        "median score": med_score,
         "play time": mean_play_time,
     }
     summary = pd.concat(kv.values(), axis=1, sort=True)

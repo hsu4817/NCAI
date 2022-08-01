@@ -182,7 +182,7 @@ class ExampleAgent():
 
             steps = 0
 
-            if episodes == 2:
+            if episodes == 100:
                 break
             
             obs = env.reset()

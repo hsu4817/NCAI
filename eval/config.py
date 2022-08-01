@@ -96,8 +96,8 @@ csv_columns = [
     "agent",
     "run",
     "map",
-    "score",
-    "end_status",
+    "mean_score",
+    "median_score",
     "play_time",
     "dates",
 ]
