@@ -54,7 +54,7 @@ class ExampleAgent():
                 print("-" * 8)
                 print(obs["blstats"])
                 self.go_back(num_lines=33)
-            old_score = obs[9]
+            old_score = obs['blstats'][9]
 
             action = self.get_action(env, obs)
 
@@ -156,7 +156,7 @@ class ExampleAgent():
         scores = []
 
         while True:
-            old_score = obs[9]
+            old_score = obs['blstats'][9]
 
             action = self.get_action(env, obs)
 
