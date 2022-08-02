@@ -83,7 +83,7 @@ def write_readme(config, run_start, run_end):
         return buff
 
     t_current = datetime.now()
-    summary_table = csv_to_table(config.summary_dir / "summary.csv", "Summary")
+    summary_table = csv_to_table(config.summary_dir / "summary.csv")
 
     # README 파일 생성
     with (config.out_dir / "README.rst").open("wt") as f:

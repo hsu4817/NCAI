@@ -1,0 +1,15 @@
+python -m eval.play_game --agent=__temp__.2022-08-02T13-15-29.team.gud0824.agents.example8.agent
+
+
+## STDOUT ##
+
+Finished after 2.907854 seconds, sps: 140.869739, score: 0.000000
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+Example8,55,0.0,2.907854,2022-08-02T13:23:02.911404

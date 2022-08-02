@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 team_repo_url = {
     ## 예제 ##
-    "Example7": "https://github.com/gud0824/NCF2022",
+    "Example8": "https://github.com/gud0824/NCF2022",
     ## 참가자 ##
 
 }
