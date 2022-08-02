@@ -206,7 +206,7 @@ Example8: agents/example8/agent.py
 
 운영진은 평가 시스템을 주기적으로 실행하여 저장소에서 최신 agent를 clone하여 평가한다. 평가 결과는 NCF2022 저장소 eval_results 폴더에 저장한다. 구체적인 평가 스케쥴은 변경될 수 있지만, 일주일에 한번 이상 평가하는 것을 목표로 한다. 중간 결과는 최종 결과와 무관하다. 중간 결과는 주기적으로 삭제될 수 있다.
 
-또한 예제에서는 `NetHackScore-v0` task를 사용하지만, 평가에서는 `NetHackChallenge-v0` task를 사용한다. 해당 task는 `NetHackScore-v0`와 작은 차이점들이 존재하기 때문에, [링크](https://github.com/facebookresearch/nle/blob/main/nle/nethack/actions.py)를 참고하여 차이점을 숙지하도록 한다.
+또한 예제에서는 `NetHackScore-v0` task를 사용하지만, 평가에서는 `NetHackChallenge-v0` task를 사용한다. 따라서 제출시에는 `NetHackChallenge-v0` task로 학습한 모델을 제출해야 한다. 해당 task는 `NetHackScore-v0`와 작은 차이점들이 존재하기 때문에, [링크](https://github.com/facebookresearch/nle/blob/main/nle/nethack/actions.py)를 참고하여 차이점을 숙지하도록 한다.
 
 # Appendix
 
