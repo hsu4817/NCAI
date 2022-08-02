@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from torch import nn
 import numpy as np
 import math
+import pathlib
 
 import gym
 
@@ -29,7 +30,7 @@ class Agent(ExampleAgent):
         self.a2c = A2C().to(device)
         self.optimizer = torch.optim.Adam(self.a2c.parameters())
 
-        self.path = './agents/example6/policy.pt'
+        self.path = pathlib.Path(__file__).parent / "policy.pt"
         if self.flags.mode != 'train':
             self.a2c.load_state_dict(torch.load(self.path))
 

@@ -76,7 +76,7 @@ def play_games(config, run_start, run_end, verbose):
         for n in trange(run_start, run_end):
             agent = config.teams[team].class_path
 
-            log_path = config.data_dir / f"{team}-{n}.log"
+            log_path = config.data_dir / f"{team}" / f"{team}-{n}.log"
             log_path.parent.mkdir(exist_ok=True, parents=True)
 
             timeout = config.args.timeout

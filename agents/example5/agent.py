@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from torch import nn
 import numpy as np
 import math
+import pathlib
 
 import gym
 
@@ -37,7 +38,7 @@ class Agent(ExampleAgent):
         self.buffer = ReplayBuffer(self.buffer_size)
         self.optimizer = torch.optim.Adam(self.policy.parameters())
         
-        self.path = './agents/example5/policy.pt'
+        self.path = pathlib.Path(__file__).parent / "policy.pt"
         if self.flags.mode != 'train':
             self.policy.load_state_dict(torch.load(self.path))
 
