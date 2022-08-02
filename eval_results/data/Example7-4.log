@@ -1,9 +1,9 @@
-python -m eval.play_game --agent=__temp__.2022-08-01T22-48-36.team.gud0824.agents.example7.agent --env=NetHackScore-v0 --use_lstm
+python -m eval.play_game --agent=__temp__.2022-08-01T23-00-12.team.gud0824.agents.example7.agent --env=NetHackScore-v0 --use_lstm
 
 
 ## STDOUT ##
 
-Finished after 2 episodes and 15.019582 seconds, Mean sps: 264.870372, Avg score: 16.000000, Median score: 16.000000
+Finished after 100 episodes and 829.383911 seconds, Mean sps: 313.053405, Avg score: 39.880000, Median score: 24.000000
 
 
 ## STDERR ##
@@ -12,4 +12,4 @@ Finished after 2 episodes and 15.019582 seconds, Mean sps: 264.870372, Avg score
 
 ## RESULT ##
 
-__temp__.2022-08-01T22-48-36.team.gud0824.agents.example7.agent,4,NetHackScore-v0,16.0,16.0,18,2022-08-01T22:50:10.103066
+Example7,4,NetHackScore-v0,39.88,24.0,833,2022-08-02T00:18:46.913369

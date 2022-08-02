@@ -59,7 +59,6 @@ def export_results(config):
     summary.columns = kv.keys()
     summary = summary.sort_values(by="median score", ascending=False)
 
-    print(summary)
     summary.to_csv(config.summary_dir / "summary.csv")
 
     #
@@ -91,7 +90,7 @@ def write_readme(config, run_start, run_end):
     summary_table = csv_to_table(config.summary_dir / "summary.csv", "Summary")
 
     # README 파일 생성
-    with (config.out_dir / "README.md").open("wt") as f:
+    with (config.out_dir / "README.rst").open("wt") as f:
         content = f"""
 NCF2022 결과
 ===============
