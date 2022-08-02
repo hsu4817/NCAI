@@ -163,8 +163,6 @@ class ExampleAgent():
                 break
 
             obs, reward, done, info = env.step(action)
-            if self.flags.use_lstm:
-                self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
             if not done and steps < self.flags.max_steps:

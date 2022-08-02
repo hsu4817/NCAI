@@ -13,22 +13,18 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def run_play_game(agent, map_name, use_lstm, timeout, verbose):
+def run_play_game(agent, timeout, verbose):
 
     # agent example -> agents.my_agent
-    cmd = f"python -m eval.play_game --agent={agent} --env={map_name}"
-    cmd += " --use_lstm" if use_lstm else ""
+    cmd = f"python -m eval.play_game --agent={agent}"
 
-    result = 0.0
+    result = [0.0, 0.0]
     remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
     log_buff = []
     while remain > 0:
         remain -= 1
 
         try:
-            if verbose:
-                tqdm.write(f"[{datetime.datetime.today().isoformat()}] {cmd}")
-
             pout = subprocess.run(
                 shlex.split(cmd),
                 stdout=subprocess.PIPE,
@@ -49,14 +45,15 @@ def run_play_game(agent, map_name, use_lstm, timeout, verbose):
             )
             log_buff += lines
 
-            result = float(re.split('[, ]', stdout_line[0])[-1])
+            result[0] = float(re.split('[, ]', stdout_line[0])[-1])
+            result[1] = float(re.split('[, ]', stdout_line[0])[2])
 
             break
 
         except subprocess.TimeoutExpired:
             # 비정상적으로 게임이 종료된 경우
             # 시간초과
-            result = 0.0
+            result = [0.0, 0.0]
 
     return result, log_buff
 
@@ -76,7 +73,7 @@ def play_game(args):
 
         logger.error(f"Agent 클래스를 임포트 할 수 없음: {agent_path}, {e}")
         traceback.print_exc()
-        result = 0.0
+        result = [0.0, 0.0]
     return result
 
 
@@ -107,11 +104,6 @@ if __name__ == "__main__":
         default="test",
         choices=["test", "train"],
         help="Test or train. Defaults to 'test'",
-    )
-    parser.add_argument(
-        "--use_lstm",
-        action="store_false",
-        help="Use LSTM in agent model."
     )
     
     args = parser.parse_args()

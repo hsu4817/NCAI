@@ -79,32 +79,20 @@ def play_games(config, run_start, run_end, verbose):
             log_path = config.data_dir / f"{team}-{n}.log"
             log_path.parent.mkdir(exist_ok=True, parents=True)
 
-            map_name = config.args.map_name
-            use_lstm = config.args.use_lstm
             timeout = config.args.timeout
-
-            start = time.monotonic()
             try:
                 result, log_buff = run_play_game(
-                    agent, map_name, use_lstm, timeout, verbose,
+                    agent, timeout, verbose,
                 )
 
-                if verbose:
-                    color = ("grey", "on_yellow")
-                    tqdm.write(
-                        colored(
-                            f"Run: {n}, {agent} score: {result}",
-                            *color,
-                        )
-                    )
+                # if verbose:
+                #     tqdm.write(f"Run: {n}, {team} score: {result}")
 
             except Exception as e:
-                result = 0.0
+                result = [0.0, 0.0]
                 with open(config.system_log_file, "at") as f:
                     f.write(f"{agent}\n")
                     f.write(f"{traceback.format_exc()}\n")
-
-            play_time = int(time.monotonic() - start)
 
             # 결과 기록
             log_buff += ["\n## RESULT ##\n"]
@@ -115,17 +103,14 @@ def play_games(config, run_start, run_end, verbose):
                         [
                             team,
                             n,
-                            map_name,
-                            result,
-                            play_time,
+                            result[0],
+                            result[1],
                             datetime.now().isoformat(),
                         ],
                     )
                 )
             ]
             log_path.write_text("\n".join(log_buff))
-
-            time.sleep(3)
 
 def write_out_file(config):
     config.out_file.parent.mkdir(parents=True, exist_ok=True)
@@ -153,7 +138,8 @@ if __name__ == "__main__":
 
     """
     # 플레이, 분석, 결과 출력
-    python -m eval.run --runs=5
+    python -m eval.run --runs=100
+
     # 플레이 안하고, 결과 분석만 실행
     python -m eval.run --play_games=false --export_results=true
     """

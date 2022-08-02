@@ -36,9 +36,7 @@ config_loader.update(
         export_results=True,
         publish_results=True,
         # 게임 플레이 옵션
-        runs=5,
-        map_name="NetHackScore-v0",
-        use_lstm=True,
+        runs=100,
         timeout=1800,
         verbose=1,  # INFO까지 출력
     )
@@ -95,7 +93,6 @@ for name, repo_url in team_repo_url.items():
 csv_columns = [
     "agent",
     "run",
-    "map",
     "score",
     "play_time",
     "dates",
