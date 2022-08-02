@@ -54,7 +54,8 @@ class ExampleAgent():
                 print("-" * 8)
                 print(obs["blstats"])
                 self.go_back(num_lines=33)
-            old_score = obs['blstats'][9]
+            
+            score = obs['blstats'][9]
 
             action = self.get_action(env, obs)
 
@@ -72,8 +73,8 @@ class ExampleAgent():
             time_delta = timeit.default_timer() - start_time
 
             print("End status:", info["end_status"].name)
-            print("Total Score:", old_score)
-            scores.append(old_score)
+            print("Final Score:", score)
+            scores.append(score)
 
             sps = steps / time_delta
             print("Episode: %i. Steps: %i. SPS: %f" % (episodes, steps, sps))
@@ -153,10 +154,8 @@ class ExampleAgent():
         total_start_time = timeit.default_timer()
         start_time = total_start_time
 
-        scores = []
-
         while True:
-            old_score = obs['blstats'][9]
+            score = obs['blstats'][9]
 
             action = self.get_action(env, obs)
 
@@ -172,24 +171,13 @@ class ExampleAgent():
                 continue
 
             time_delta = timeit.default_timer() - start_time
-            scores.append(old_score)
             sps = steps / time_delta
-
-            episodes += 1
-            mean_sps += (sps - mean_sps) / episodes
-
-            start_time = timeit.default_timer()
-
-            steps = 0
-
-            if episodes == 100:
-                break
             
-            obs = env.reset()
+            break
 
         env.close()
 
-        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(scores)/episodes, statistics.median(scores))
+        ret = "Finished after %f seconds, sps: %f, score: %f" % (timeit.default_timer() - total_start_time, sps, score)
         print(ret)
 
         return ret

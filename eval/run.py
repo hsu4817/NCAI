@@ -72,8 +72,8 @@ def play_games(config, run_start, run_end, verbose):
     team_list = config.teams
 
     # 게임 실행
-    for n in trange(run_start, run_end):
-        for team in tqdm(team_list, leave=False):
+    for team in tqdm(team_list, leave=False):
+        for n in trange(run_start, run_end):
             agent = config.teams[team].class_path
 
             log_path = config.data_dir / f"{team}-{n}.log"
@@ -93,13 +93,13 @@ def play_games(config, run_start, run_end, verbose):
                     color = ("grey", "on_yellow")
                     tqdm.write(
                         colored(
-                            f"Run: {n}, {agent}: {result[0]}, {result[1]}",
+                            f"Run: {n}, {agent} score: {result}",
                             *color,
                         )
                     )
 
             except Exception as e:
-                result = [0.0, 0.0]
+                result = 0.0
                 with open(config.system_log_file, "at") as f:
                     f.write(f"{agent}\n")
                     f.write(f"{traceback.format_exc()}\n")
@@ -116,8 +116,7 @@ def play_games(config, run_start, run_end, verbose):
                             team,
                             n,
                             map_name,
-                            result[0],
-                            result[1],
+                            result,
                             play_time,
                             datetime.now().isoformat(),
                         ],

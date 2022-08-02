@@ -29,16 +29,11 @@ def export_results(config):
     run_end = df["run"].max()
 
     #
-    # 평균 score의 평균(over 5 runs)
+    # 평균 및 median score
     #
-    df_mean_score = df[["agent", "mean_score"]].groupby("agent")
-    mean_score = df_mean_score.mean()
-
-    #
-    # median score의 평균(over 5 runs)
-    #
-    df_med_score = df[["agent", "median_score"]].groupby("agent")
-    med_score = df_med_score.mean()
+    df_score = df[["agent", "score"]].groupby("agent")
+    mean_score = df_score.mean()
+    median_score = df_score.median()
 
     #
     # 게임 플레이 시간
@@ -51,7 +46,7 @@ def export_results(config):
     #
     kv = {
         "mean score": mean_score,
-        "median score": med_score,
+        "median score": median_score,
         "play time": mean_play_time,
     }
     summary = pd.concat(kv.values(), axis=1, sort=True)
@@ -113,7 +108,7 @@ NCF2022 결과
 - 게임번호 {run_start}부터 {run_end}까지 결과(최근 게임 결과)만 사용함
 - mean score: 평균 점수
 - median score: 점수의 중간값
-- player_time: 평균 게임 플레이 시간
+- play_time: 평균 게임 플레이 시간
 """
         f.write(content)
 
