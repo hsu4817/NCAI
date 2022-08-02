@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--env",
         type=str,
-        default="NetHackScore-v0",
+        default="NetHackChallenge-v0",
     )
     parser.add_argument(
         "--max-steps",

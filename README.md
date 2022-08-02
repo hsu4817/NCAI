@@ -102,7 +102,7 @@ $ python -m nle.scripts.play --help
 
 # About NLE
 
-NLE는 OpenAI Gym을 기반으로 만들어졌기 때문에, 기본적으로 action space와 observation space가 정해져있다. NLE에는 최대 90여개의 action이 존재하지만, NLE에서는 빠르고 안정적인 학습을 위해 기본적으로 23개의 action만을 사용한다. 물론 사용자가 원할 경우 action space를 확장할 수도 있다. 다음은 NLE의 기본 action과 action number를 정리한 표다.
+NLE는 OpenAI Gym을 기반으로 만들어졌기 때문에, 기본적으로 action space와 observation space가 정해져있다. NLE에는 최대 90여개의 action이 존재하지만, 예제 환경에서는 빠르고 안정적인 학습을 위해 기본적인 23개의 action만을 사용한다. 물론 사용자가 원할 경우 action space를 확장할 수도 있다. 다음은 예제 환경에서 사용할 NLE의 기본 action과 action number를 정리한 표다.
 
 |action number|action|
 |---|---|
@@ -130,7 +130,7 @@ NLE는 OpenAI Gym을 기반으로 만들어졌기 때문에, 기본적으로 act
 |21|먹기|
 |22|수색하기|
 
-NLE에서는 각 step 마다 observation을 제공한다. 다음은 NLE의 observation space의 중요 요소를 간단히 정리한 표다.
+NLE에서는 각 step 마다 observation을 제공한다. 다음은 예제 환경에서의 observation space의 중요 요소를 간단히 정리한 표다.
 
 |요소 이름|요소 정보|범위|크기|
 |---|---|---|---|
@@ -186,6 +186,7 @@ NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다�
 |Scout|던전의 미확인 지역을 많이 탐색할 수록 높은 reward를 획득한다.|
 |Score|In-game score를 많이 획득할 수록 높은 reward를 획득한다.|
 |Oracle|넷핵의 게임 요소인 Oracle을 찾으면 reward를 획득한다.|
+|[Challenge](https://github.com/facebookresearch/nle/blob/main/nle/env/tasks.py#L287)|Score task에서 action, observation space가 변형되었고, 캐릭터가 랜덤으로 배정된다.|
 
 앞으로의 예제에서는 가장 기본적인 `NetHackScore-v0`을 사용하여 강화학습을 구현해 볼 것이다. 여기까지 정독을 완료했다면, 이제 예제를 보며 NLE와 친해지는 시간을 가져보도록 하자.
 
@@ -204,6 +205,8 @@ Example8: agents/example8/agent.py
 3. 운영진에게 저장소의 접근 권한을 공유한다.
 
 운영진은 평가 시스템을 주기적으로 실행하여 저장소에서 최신 agent를 clone하여 평가한다. 평가 결과는 NCF2022 저장소 eval_results 폴더에 저장한다. 구체적인 평가 스케쥴은 변경될 수 있지만, 일주일에 한번 이상 평가하는 것을 목표로 한다. 중간 결과는 최종 결과와 무관하다. 중간 결과는 주기적으로 삭제될 수 있다.
+
+또한 예제에서는 `NetHackScore-v0` task를 사용하지만, 평가에서는 `NetHackChallenge-v0` task를 사용한다. 해당 task는 `NetHackScore-v0`와 작은 차이점들이 존재하기 때문에, [링크](https://github.com/facebookresearch/nle/blob/main/nle/nethack/actions.py)를 참고하여 차이점을 숙지하도록 한다.
 
 # Appendix
 
