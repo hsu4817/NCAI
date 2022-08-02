@@ -95,11 +95,14 @@ class Agent(ExampleAgent):
         if self.flags.mode != 'train':
             observed_glyphs = torch.from_numpy(obs['glyphs']).float().unsqueeze(0).to(device)
             observed_stats = torch.from_numpy(obs['blstats']).float().unsqueeze(0).to(device)
+
+            with torch.no_grad():
+                actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
         else:
             observed_glyphs = torch.from_numpy(obs['glyphs']).float().to(device)
             observed_stats = torch.from_numpy(obs['blstats']).float().to(device)
 
-        actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
+            actor, critic, self.h_t, self.c_t = self.a2c_lstm(observed_glyphs, observed_stats, self.h_t, self.c_t)
         return actor, critic
     
     def optimize_td_loss(self, actors, actions, critics, returns):

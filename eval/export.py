@@ -62,10 +62,11 @@ def export_results(config):
     write_readme(config, run_start, run_end)
 
 def write_readme(config, run_start, run_end):
-    def csv_to_table(filename, title):
+    def csv_to_table(filename):
         buff = f"""
-.. list-table:: {title}
+.. list-table::
    :header-rows: 1
+
 """
         with filename.open() as f:
             reader = csv.reader(f)
@@ -89,7 +90,9 @@ def write_readme(config, run_start, run_end):
         content = f"""
 NCF2022 결과
 ===============
-.. list-table:: 진행현황
+**진행 현황**
+
+.. list-table::
    :header-rows: 1
  
    * - 시작시간
@@ -102,9 +105,7 @@ NCF2022 결과
      - {run_start}부터 {run_end}까지
 
 **결과 요약**
-
 {summary_table}
-
 - 게임번호 {run_start}부터 {run_end}까지 결과(최근 게임 결과)만 사용함
 - mean score: 평균 점수
 - median score: 점수의 중간값
