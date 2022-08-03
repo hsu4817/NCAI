@@ -79,14 +79,23 @@ def play_games(config, run_start, run_end, verbose):
             log_path = config.data_dir / f"{team}" / f"{team}-{n}.log"
             log_path.parent.mkdir(exist_ok=True, parents=True)
 
+            use_lstm = config.args.use_lstm
+
             timeout = config.args.timeout
             try:
                 result, log_buff = run_play_game(
-                    agent, timeout, verbose,
+                    agent, use_lstm, timeout, verbose,
                 )
 
-                # if verbose:
-                #     tqdm.write(f"Run: {n}, {team} score: {result}")
+                # evaluation episodes 결과 출력
+                if verbose:
+                    color = ("white", "on_green")
+                    tqdm.write(
+                        colored(
+                            f"Run: {n}, {team} score: {result[0]}",
+                            *color,
+                        )
+                    )
 
             except Exception as e:
                 result = [0.0, 0.0]

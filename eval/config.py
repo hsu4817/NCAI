@@ -37,6 +37,7 @@ config_loader.update(
         publish_results=True,
         # 게임 플레이 옵션
         runs=100,
+        use_lstm=False,
         timeout=1800,
         verbose=1,  # INFO까지 출력
     )
