@@ -44,6 +44,7 @@ class ExampleAgent():
         scores = []
 
         while True:
+            # NetHack interface render
             if not self.flags.no_render:
                 print("-" * 8 + " " * 71)
                 print(f"Previous reward: {str(reward):64s}")
@@ -55,6 +56,7 @@ class ExampleAgent():
                 print(obs["blstats"])
                 self.go_back(num_lines=33)
             
+            # NLE는 done=True일 때 obs가 초기화되기 때문에, step 이전에 score를 저장
             score = obs['blstats'][9]
 
             action = self.get_action(env, obs)
@@ -63,6 +65,8 @@ class ExampleAgent():
                 break
 
             obs, reward, done, info = env.step(action)
+
+            # lstm 모델의 경우 h_t, c_t를 매 episode마다 초기화
             if self.flags.use_lstm:
                 self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
