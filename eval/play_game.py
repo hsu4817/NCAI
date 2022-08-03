@@ -13,11 +13,10 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def run_play_game(agent, use_lstm, timeout, verbose):
+def run_play_game(agent, timeout, verbose):
 
     # agent example -> agents.my_agent
     cmd = f"python -m eval.play_game --agent={agent}"
-    cmd += " --use_lstm=true" if use_lstm else ""
 
     result = [0.0, 0.0]
     remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
@@ -105,11 +104,6 @@ if __name__ == "__main__":
         default="test",
         choices=["test", "train"],
         help="Test or train. Defaults to 'test'",
-    )
-    parser.add_argument(
-        "--use_lstm",
-        action="store_false",
-        help="Use LSTM in agent model."
     )
     
     args = parser.parse_args()

@@ -79,12 +79,10 @@ def play_games(config, run_start, run_end, verbose):
             log_path = config.data_dir / f"{team}" / f"{team}-{n}.log"
             log_path.parent.mkdir(exist_ok=True, parents=True)
 
-            use_lstm = config.args.use_lstm
-
             timeout = config.args.timeout
             try:
                 result, log_buff = run_play_game(
-                    agent, use_lstm, timeout, verbose,
+                    agent, timeout, verbose,
                 )
 
                 # evaluation episodes 결과 출력
