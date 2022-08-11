@@ -15,7 +15,6 @@ from . import config
 
 logger = logging.getLogger(__name__)
 
-
 def export_results(config):
     df = pd.read_csv(config.out_file, names=config.csv_columns)
 
@@ -40,6 +39,25 @@ def export_results(config):
     #
     df_play_time = df[["agent", "play_time"]].groupby("agent")
     mean_play_time = df_play_time.mean()
+
+    #mean score bar graph
+    names = mean_score.index.to_list()
+    plt.bar(np.arange(len(names)), mean_score["score"].to_list())
+    plt.xticks(np.arange(len(names)), names)
+    plt.savefig(config.fig_dir / "mean_score.png")
+    plt.clf()
+
+    #median score bar graph
+    plt.bar(np.arange(len(names)), median_score["score"].to_list())
+    plt.xticks(np.arange(len(names)), names)
+    plt.savefig(config.fig_dir / "median_score.png")
+    plt.clf()
+
+    #mean play time bar graph
+    plt.bar(np.arange(len(names)), mean_play_time["play_time"].to_list())
+    plt.xticks(np.arange(len(names)), names)
+    plt.savefig(config.fig_dir / "mean_play_time.png")
+    plt.clf()
 
     #
     # TABLE

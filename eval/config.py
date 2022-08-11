@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 team_repo_url = {
     ## 예제 ##
-    "Example8": "https://github.com/gud0824/NCF2022",
+    "Example8": "https://github.com/rex8312/NCF2022",
     ## 참가자 ##
 
 }
@@ -29,7 +29,7 @@ config_loader.update(
         # 평가 정보가 저장된 경로
         temp_dir=Path("__temp__"),
         out_dir=Path("eval_results"),
-        ncf_repo="https://github.com/gud0824/NCF2022.git",
+        ncf_repo="https://github.com/rex8312/NCF2022.git",
         # 작업 목록
         update_team_repo=True,
         play_games=True,
@@ -64,6 +64,8 @@ data_dir = temp_dir / "data"
 system_log_file = temp_dir / "system.log"
 result_file = temp_dir / "result.csv"
 
+fig_dir = out_dir / "fig"
+fig_dir.mkdir(parents=True, exist_ok=True)
 summary_dir = out_dir / "summary"
 summary_dir.mkdir(parents=True, exist_ok=True)
 out_file = out_dir / "result.csv"
