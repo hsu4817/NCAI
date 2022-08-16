@@ -13,7 +13,7 @@ from .dqn import ReplayBuffer, DQN
 from collections import deque
 
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter()
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 class Agent(ExampleAgent):
@@ -78,6 +78,8 @@ class Agent(ExampleAgent):
         self.optimizer.step()
 
     def train(self):
+        writer = SummaryWriter()
+
         env = self.env
 
         num_episodes = 0

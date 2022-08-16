@@ -142,9 +142,10 @@ class ExampleAgent():
     def preprocess_map(self, obs):
         raise NotImplementedError('Should implement preprocess_map if you need.')
     
-    def evaluate(self):
+    def evaluate(self, seed):
         env = self.env
         
+        env.seed(seed, seed)
         obs = env.reset()
 
         steps = 0

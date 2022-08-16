@@ -39,6 +39,7 @@ config_loader.update(
         runs=100,
         timeout=1800,
         verbose=1,  # INFO까지 출력
+        env="NetHackChallenge-v0",
     )
 )
 config_loader.parse()

@@ -13,10 +13,10 @@ from tqdm import tqdm
 logger = logging.getLogger(__name__)
 
 
-def run_play_game(agent, timeout, verbose):
+def run_play_game(agent, env, seed, timeout, verbose):
 
     # agent example -> agents.my_agent
-    cmd = f"python -m eval.play_game --agent={agent}"
+    cmd = f"python -m eval.play_game --agent={agent} --env={env} --seed={seed}"
 
     result = [0.0, 0.0]
     remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
@@ -65,7 +65,7 @@ def play_game(args):
         name = "Agent"
         agent = getattr(importlib.import_module(module), name)(args)
 
-        result = agent.evaluate()
+        result = agent.evaluate(args.seed)
     
     # except (AttributeError, ImportError):
     except Exception as e:
@@ -88,6 +88,11 @@ if __name__ == "__main__":
         "--env",
         type=str,
         default="NetHackChallenge-v0",
+    )
+    parser.add_argument(
+        "--seed",
+        type=int,
+        default=0,
     )
     parser.add_argument(
         "--max-steps",

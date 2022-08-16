@@ -128,6 +128,16 @@ NCF2022 결과
 - mean score: 평균 점수
 - median score: 점수의 중간값
 - play_time: 평균 게임 플레이 시간
+
+.. figure:: fig/mean_score.png
+   :figwidth: 200
+
+.. figure:: fig/median_score.png
+   :figwidth: 200
+
+.. figure:: fig/mean_play_time.png
+   :figwidth: 200
+
 """
         f.write(content)
 

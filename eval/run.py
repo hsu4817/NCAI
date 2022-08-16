@@ -6,6 +6,7 @@ import shutil
 import subprocess
 import time
 import traceback
+import random
 from datetime import datetime
 
 import pandas as pd
@@ -20,7 +21,6 @@ from . import config
 from .config import args
 
 logger = logging.getLogger(__name__)
-
 
 def update_team_repo(config):
     for name, team in config.teams.items():
@@ -72,28 +72,24 @@ def play_games(config, run_start, run_end, verbose):
     team_list = config.teams
 
     # 게임 실행
-    for team in tqdm(team_list, leave=False):
-        for n in trange(run_start, run_end):
+    for n in trange(run_start, run_end):
+        msg = colored(f"Run: {n}", "green")
+        seed = random.SystemRandom().randrange(sys.maxsize)
+        for team in tqdm(team_list, leave=False):
             agent = config.teams[team].class_path
 
             log_path = config.data_dir / f"{team}" / f"{team}-{n}.log"
             log_path.parent.mkdir(exist_ok=True, parents=True)
 
+            env = config.args.env
             timeout = config.args.timeout
             try:
                 result, log_buff = run_play_game(
-                    agent, timeout, verbose,
+                    agent, env, seed, timeout, verbose,
                 )
 
-                # evaluation episodes 결과 출력
-                if verbose:
-                    color = ("white", "on_green")
-                    tqdm.write(
-                        colored(
-                            f"Run: {n}, {team} score: {result[0]}",
-                            *color,
-                        )
-                    )
+                msg += f", {team} score: "
+                msg += colored(f"{result[0]}", "yellow")
 
             except Exception as e:
                 result = [0.0, 0.0]
@@ -118,6 +114,9 @@ def play_games(config, run_start, run_end, verbose):
                 )
             ]
             log_path.write_text("\n".join(log_buff))
+        
+        if verbose:
+            tqdm.write(msg)
 
 def write_out_file(config):
     config.out_file.parent.mkdir(parents=True, exist_ok=True)
