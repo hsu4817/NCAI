@@ -1,0 +1,15 @@
+python -m eval.play_game --agent=__temp__.2022-08-16T17-40-21.team.rex8312.agents.example8.agent --env=NetHackScore-v0 --seed=9201144885550020075
+
+
+## STDOUT ##
+
+Finished after 0.760417 seconds, sps: 2.635220, score: 0.000000
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+Example8,25,0.0,0.760417,2022-08-16T17:49:54.627582
