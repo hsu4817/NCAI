@@ -199,7 +199,7 @@ NLE는 특정 task를 설정하여 강화학습이 진행되도록 한다. 다�
 2. 아래처럼 평가하려는 {agent 이름 or 팀 이름}: {agent.py 파일 경로} 형식으로 ```agent_path.yaml``` 파일을 작성/수정하여 저장소에 추가한다.
 
 ``` bash
-Example8: agents/example8/agent.py
+Example10: agents/example10/agent.py
 ```
 
 3. 운영진에게 저장소의 접근 권한을 공유한다.
