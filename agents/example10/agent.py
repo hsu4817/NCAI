@@ -1,6 +1,5 @@
 from tabnanny import check
 from ExampleAgent import ExampleAgent
-from agents.example6.a2c import A2C
 from .a2c import A2C
 from .player_agent import PlayerAgent
 from .buffer import Buffer
@@ -9,11 +8,11 @@ from torch.nn import functional as F
 import gym
 from collections import deque
 import numpy as np
+import pathlib
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 from torch.utils.tensorboard import SummaryWriter
-writer = SummaryWriter()
 
 class Agent(ExampleAgent):
     def __init__(self, FLAGS=None):
@@ -26,7 +25,7 @@ class Agent(ExampleAgent):
         self.closs_coeff = 0.5
         self.eloss_coeff = 0.0001
 
-        self.path = './agents/example10/policy.pt'
+        self.path = pathlib.Path(__file__).parent / "policy.pt"
         if self.flags.mode != 'train':
             self.num_envs = 1
             self.a2c.load_state_dict(torch.load(self.path))
@@ -130,6 +129,8 @@ class Agent(ExampleAgent):
         return my_obs
 
     def train(self):
+        writer = SummaryWriter()
+        
         env = self.env
         
         num_episodes = 0

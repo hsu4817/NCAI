@@ -31,6 +31,7 @@ def run_play_game(agent, env, seed, timeout, verbose):
                 stderr=subprocess.PIPE,
                 timeout=timeout,
             )
+            print(pout)
 
             stdout_line = pout.stdout.split(b"\n")
             stdout_line = [line.rstrip().decode("utf-8") for line in stdout_line]
