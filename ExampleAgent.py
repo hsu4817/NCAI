@@ -15,6 +15,8 @@ import gym
 import nle  # noqa: F401
 from nle import nethack
 
+from torch.utils.tensorboard import SummaryWriter
+
 class ExampleAgent():
     def __init__(self, FLAGS=None):
         self.flags = FLAGS
@@ -26,6 +28,8 @@ class ExampleAgent():
         raise NotImplementedError('Should implement get_action function')
 
     def run_episodes(self):
+        writer = SummaryWriter()
+
         env = self.env
         
         obs = env.reset()
@@ -43,7 +47,7 @@ class ExampleAgent():
 
         scores = []
 
-        while True:
+        while steps < self.flags.max_steps:
             # NetHack interface render
             if not self.flags.no_render:
                 print("-" * 8 + " " * 71)
@@ -71,7 +75,7 @@ class ExampleAgent():
                 self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
-            if not done and steps < self.flags.max_steps:
+            if not done:
                 continue
 
             time_delta = timeit.default_timer() - start_time
@@ -79,25 +83,26 @@ class ExampleAgent():
             print("End status:", info["end_status"].name)
             print("Final Score:", score)
             scores.append(score)
+            writer.add_scalar('Last 100 Episode Mean Score', sum(scores)/len(scores) if scores else 0, steps)
 
-            sps = steps / time_delta
-            print("Episode: %i. Steps: %i. SPS: %f" % (episodes, steps, sps))
+            # sps = steps / time_delta
+            # print("Episode: %i. Steps: %i. SPS: %f" % (episodes, steps, sps))
 
-            episodes += 1
-            mean_sps += (sps - mean_sps) / episodes
+            # episodes += 1
+            # mean_sps += (sps - mean_sps) / episodes
 
             start_time = timeit.default_timer()
 
-            steps = 0
+            # steps = 0
 
-            if episodes == self.flags.ngames:
-                break
+            # if episodes == self.flags.ngames:
+            #     break
             
             obs = env.reset()
 
         env.close()
-        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(scores)/episodes, statistics.median(scores))
-        print(ret)
+        # ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(scores)/episodes, statistics.median(scores))
+        # print(ret)
     
     def is_more(self, screen):
         for line in screen:

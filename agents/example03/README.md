@@ -11,5 +11,5 @@
 이 예제를 실행하려면 다음 명령어를 터미널에서 입력하도록 하자.
 
 ```
-(nle) ~/NCF2022$ python run.py --run agents.example3
+(nle) ~/NCF2022$ python run.py --run agents.example03
 ```

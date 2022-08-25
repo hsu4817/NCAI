@@ -471,7 +471,7 @@ class Agent(ExampleAgent):
         elif self.action_list:                                                      # solve continuations
             self.last_action = self.action_list.pop()
             return self.last_action
-        elif obs['blstats'][21] > 1 and self.orange_count > 0:                     # eat oragne
+        elif obs['blstats'][21] > 1 and self.orange_count > 0:                     # eat orange
             self.action_list += [4, 21]
             self.orange_count -= 1
         elif obs['blstats'][21] > 1 and find_in_message(screen, "corpse"):

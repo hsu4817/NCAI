@@ -9,11 +9,11 @@
 이 예제를 실행하려면 우선 다음 명령어를 터미널에 입력하여 학습을 통해 policy.pt 파일을 생성해야 한다.
 
 ```
-(nle) ~/NCF2022$ python run.py --run agents.example8 --mode train
+(nle) ~/NCF2022$ python run.py --run agents.example08 --mode train
 ```
 
-학습 후 폴더 내에 policy.pt 파일이 생성되었다면, 다음 명령어를 터미널에 입력하여 실행할 수 있다.
+학습 후 폴더 내에 policy.pt 파일이 생성되었다면, 다음 명령어를 터미널에 입력하여 실행할 수 있다. 이때 LSTM을 사용하는 모델이기 때문에, use_lstm 옵션을 추가해야 한다.
 
 ```
-(nle) ~/NCF2022$ python run.py --run agents.example8
+(nle) ~/NCF2022$ python run.py --run agents.example08 --use_lstm
 ```

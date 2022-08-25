@@ -1,4 +1,5 @@
 import numpy as np
+from collections import deque
 
 class Trajectory():
     __slots__ = [
@@ -41,7 +42,7 @@ class Trajectory():
 class Buffer():
     def __init__(self, num_actors) -> None:
         self.record_length = 0
-        self.finished_episodes = []
+        self.finished_episodes = deque([])
         self.ongoing_episodes = [None for _ in range(num_actors)]
 
     def add(self, actor, action, reward, obs, new_obs, done, actor_num, time_step):
@@ -57,7 +58,9 @@ class Buffer():
     def make_train_data(self, size):
         assert size <= self.record_length
         actor_return, action_return, reward_return, obs_return, new_obs_return, done_return = [], [], [], [], [], []
-        for finished_episode in self.finished_episodes:
+
+        while self.finished_episodes:
+            finished_episode = self.finished_episodes.popleft()
             actors, actions, rewards, obss, new_obss, dones = finished_episode.get()
             actor_return += actors
             action_return += actions
@@ -74,6 +77,5 @@ class Buffer():
         done_return = done_return[:size]
 
         self.record_length = 0
-        self.finished_episodes = []
 
         return actor_return, action_return, reward_return, obs_return, new_obs_return, done_return
