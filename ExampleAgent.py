@@ -43,7 +43,7 @@ class ExampleAgent():
 
         scores = []
 
-        while steps < self.flags.max_steps:
+        while True:
             # NetHack interface render
             if not self.flags.no_render:
                 print("-" * 8 + " " * 71)
@@ -71,7 +71,7 @@ class ExampleAgent():
                 self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
             steps += 1
 
-            if not done:
+            if not done and steps < self.flags.max_steps:
                 continue
 
             time_delta = timeit.default_timer() - start_time
