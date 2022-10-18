@@ -15,21 +15,27 @@ from torch.utils.tensorboard import SummaryWriter
 
 # First, we use state just glyphs
 
+
+
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+f = open('DQN/output.txt', 'w')
 
 class Agent():
     
     def __init__(self, FLAGS = None):
 
-        MOVE_ACTIONS = (nethack.CompassDirection.N,
+        self.MOVE_ACTIONS = (nethack.CompassDirection.N,
                     nethack.CompassDirection.E,
                     nethack.CompassDirection.S,
                     nethack.CompassDirection.W)
+        
+        # MOVE_ACTIONS = tuple(nethack.CompassDirection)
 
         self.env = gym.make(
             id = FLAGS.env,
+            # observation_keys = ("glyphs","blstats"),
             observation_keys = ("glyphs","chars","colors","specials","blstats","message"),
-            actions =  MOVE_ACTIONS)
+            actions =  self.MOVE_ACTIONS)
 
         self.writer = SummaryWriter()
         
@@ -53,7 +59,9 @@ class Agent():
 
             self.buffer = Replaybuffer()
 
-            self.gamma = 0.999
+            self.gamma = 0.99
+            # self.gamma = 1 # for debuger
+
             self.batch_size = 32
             self.target_update = 50
             self.episode = FLAGS.episodes
@@ -100,9 +108,8 @@ class Agent():
         q_curr = self.policy(gly, bls)
         q_curr = q_curr.gather(1, action).squeeze()
 
-        loss = F.smooth_l1_loss(q_curr, q_target)
+        loss = F.smooth_l1_loss(q_curr.unsqueeze(1), q_target.unsqueeze(1))
 
-        # self.writer.add_scalar("loss ", loss, )
         self.optimizer.zero_grad()
         loss.backward()
         self.optimizer.step()
@@ -120,9 +127,20 @@ class Agent():
         steps = 0
         loss = 0
 
+
+        distance = 1
+        distance_step = int(distance * 4/3)
+
         for epi in range(self.episode):
             done = False
-            state = env.reset() # each reset generates a new environment instance    
+
+            env = gym.make(
+            id = "MiniHack-Room-Random_curi-5x5-v0",
+            observation_keys = ("glyphs","chars","colors","specials","blstats","message"),
+            actions =  self.MOVE_ACTIONS)
+            
+            state = env.reset(size = 5, distance = 1) # each reset generates a new environment instance    
+            # env.render("human")
             
             while not done:
                 steps += 1
@@ -143,6 +161,7 @@ class Agent():
                 state = new_state
 
                 if self.buffer.len() > self.batch_size:
+                    breakpoint()
                     loss += self.update()
                 
                 # target network update 
@@ -152,7 +171,7 @@ class Agent():
 
             # 한번 episode 시행 후, 
             e_rewards.append(0.0)
-            print("Episode: ", epi, "  / step: ", tot_steps )
+            # print("Episode: ", epi, "  / step: ", tot_steps )
 
             #logging
             if len(e_rewards) % self.print_freq == 0 :
@@ -166,14 +185,25 @@ class Agent():
                 self.writer.add_scalar("mean_reward", round(np.mean(e_rewards[-101:-1]), 2), len(e_rewards) / 25)
                 self.writer.add_scalar("mean_steps", steps / 25, len(e_rewards) / 25)
                 self.writer.add_scalar("mean_loss", loss / 25, len(e_rewards) / 25)
+                
+                # for curriculum learning 
+                # if (steps / 25) <= distance_step and round(np.mean(e_rewards[-101:-1]), 2) >= 0.9:
+                #     print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ change the distance! @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+                #     f.write("change the distance!: ", distance, "  num: ", str(len(e_rewards)))
+                #     distance = distance + 1 if distance < 8 else 8
+                #     distance_step = int(distance * 4/3)
+                
                 steps = 0
                 loss = 0
-            #model save 
-            # print("DQN/{}/model".format(self.model_num))
+                    
+
+            # model save 
             if len(e_rewards) % self.save_freq == 0:
                 torch.save(self.policy, "DQN/{}/model".format(self.model_num) + str(len(e_rewards)))
             
             self.writer.close()
+        
+        f.close()
 
 
             
@@ -190,8 +220,10 @@ class Agent():
 
         for epi in range(self.episode):
             done = False
-            state = env.reset() # each reset generates a new environment instance
-            # steps= 0        
+            state = env.reset(size = 5, distance = 1) # each reset generates a new environment instance
+            # steps= 0 
+            env.render("human")
+                   
             
             while not done:
                 steps += 1
@@ -219,16 +251,12 @@ class Agent():
             
 
   
-            if steps < 40:
-                print("done: ", done)
-                print(actions)
-            
+            print(actions, len(actions))
             actions = []
 
             # 한번 episode 시행 후------------------------------------------------------------------------------------
             e_rewards.append(0.0)
-            # print("steps: {} and tot_steps: {}".format(steps, tot_steps))
-            # break
+     
             #logging
             if len(e_rewards) % self.print_freq == 0 :
 
@@ -241,9 +269,3 @@ class Agent():
 
 
 
-
-        
-    
-
-
-        
