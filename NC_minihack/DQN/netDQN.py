@@ -7,15 +7,19 @@ from collections import deque
 from nle import nethack
 
 from torch.nn import functional as F
+from torchsummary import summary as summary_
 
 class Crop(nn.Module):
     def __init__(self, height, width, height_target, width_target):
         super(Crop, self).__init__()
         
-        self.width = width
-        self.height = height
-        self.width_target = width_target
-        self.height_target = height_target
+        self.width = width # 79
+        self.height = height # 21
+        self.width_target = width_target 
+        self.height_target = height_target # (9X9)
+
+        # (21 * 79 ---> 9 * 9)
+        
         width_grid = self._step_to_range(2 / (self.width - 1), self.width_target)[
                      None, :
                      ].expand(self.height_target, -1)
@@ -25,6 +29,7 @@ class Crop(nn.Module):
 
         self.register_buffer("width_grid", width_grid.clone())
         self.register_buffer("height_grid", height_grid.clone())
+        breakpoint()
 
     def _step_to_range(self, delta, num_steps):
         return delta * torch.arange(-num_steps // 2, num_steps // 2)
@@ -53,12 +58,12 @@ class Crop(nn.Module):
         )
 
 class DQN(nn.Module):
-    def __init__(self, embedding_dim=32, crop_dim=9, num_layers=5):
+    def __init__(self, embedding_dim=32, crop_dim=9, num_layers=5, num_actions = 8):
         super(DQN, self).__init__()
 
         self.glyph_shape = (21, 79)
         self.blstats_shape = 26
-        self.num_actions = 8
+        self.num_actions = num_actions
         self.h = self.glyph_shape[0]
         self.w = self.glyph_shape[1]
         self.k_dim = embedding_dim
@@ -133,6 +138,14 @@ class DQN(nn.Module):
             nn.ReLU(),
             nn.Linear(self.h_dim, self.num_actions)
         )
+
+        self.fc2 = nn.Sequential(
+            nn.Linear(656, self.h_dim),
+            nn.ReLU(),
+            nn.Linear(self.h_dim, self.h_dim),
+            nn.ReLU(),
+            nn.Linear(self.h_dim, self.num_actions)
+        )
     
     def _select(self, embed, x):
         # Work around slow backward pass of nn.Embedding, see
@@ -157,13 +170,18 @@ class DQN(nn.Module):
         crop_rep = crop_rep.view(B, -1)
         reps.append(crop_rep)
         
+
+        """ 나중에 맵이 커지면 추가해주기 
         glyphs_emb = self._select(self.embed, observed_glyphs)
         glyphs_emb = glyphs_emb.transpose(1, 3)
         glyphs_rep = self.extract_representation(glyphs_emb)
         glyphs_rep = glyphs_rep.view(B, -1)
-        reps.append(glyphs_rep)
-        
+        # reps.append(glyphs_rep) # 필요없는 정보(환경은 작은데, 정보가 너무 많아서 문제발생)
+        """
+
         st = torch.cat(reps, dim=1)
-        st = self.fc(st)
+        # breakpoint()
+
+        st = self.fc2(st)
         # print("in forward")
         return st
