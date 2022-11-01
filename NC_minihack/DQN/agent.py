@@ -33,8 +33,7 @@ class Agent():
 
         self.env = gym.make(
             id = FLAGS.env,
-            # observation_keys = ("glyphs","blstats"),
-            observation_keys = ("glyphs","chars","colors","specials","blstats","message"),
+            observation_keys = ("glyphs","blstats"),
             actions =  self.MOVE_ACTIONS)
 
         self.writer = SummaryWriter()
@@ -244,10 +243,7 @@ class Agent():
                 state = new_state
 
                 e_rewards[-1] += reward
-                # print("Episode: ", epi, "  / step: ", tot_steps, "\tAction Taken: ", str(action) )
-                # env.render("human")
-                # if action != 1:
-                #     print("action: ", action)
+
             
 
   
