@@ -7,8 +7,8 @@ from collections import deque
 from nle import nethack
 
 from torch.nn import functional as F
-from netPPO import PPO
-from memory import Memory
+from PPO.netPPO import PPO
+from PPO.memory import Memory
 
 from torch.utils.tensorboard import SummaryWriter
 from torch.distributions import Categorical
@@ -46,10 +46,14 @@ class Agent():
         self.batch_size = 32
         self.buffer_size = 1
         
-        #test
-        test = False
-        if test == True:
-            self.actor = torch.load("test5/" + "model5950")
+        
+        if FLAGS.mode == "test":
+            self.actor = torch.load("PPO/" + FLAGS.model_dir)
+
+            self.env = gym.make(
+                    id = "MiniHack-Room-5x5-v0",
+                    observation_keys = ("glyphs","blstats"),
+                    actions =  MOVE_ACTIONS,)
         else: 
             # actor network 
             self.actor = PPO(num_actions= self.env.action_space.n).to(device)
@@ -57,17 +61,23 @@ class Agent():
             self.critic = PPO(num_actions= self.env.action_space.n).to(device)
 
             self.memory = Memory(self.batch_size, self.buffer_size)
-            self.print_freq = self.batch_size * self.buffer_size  #640
-            self.save_freq = self.batch_size * self.buffer_size * 2
-
+            self.print_freq = self.batch_size * self.buffer_size  
 
             self.gamma = 0.99
             self.lmbda = 0.95
             self.episode = 10000
+            self.model_num = FLAGS.model_num
 
             # initial optimize
             self.actor_optimizer = torch.optim.Adam(self.actor.parameters(), lr = 1e-4)
             # self.critic_optimizer = torch.optim.Adam(self.critic.parameters(), lr = 0.001)
+
+            # self.env = gym.vector.make(
+            #     id = "MiniHack-Room-5x5-v0",
+            #     observation_keys = ("glyphs","blstats"),
+            #     actions =  MOVE_ACTIONS,
+            #     num_envs = 3)
+
 
 
     def get_action(self, obs):
@@ -206,7 +216,7 @@ class Agent():
                 print("************************************************")
                 
                 if save % 50 == 0:
-                    torch.save(self.actor, "{}/model".format("test5") + str(save))
+                    torch.save(self.actor, "PPO/{}/model".format(self.model_num) + str(save))
 
                 self.writer.add_scalar("mean_reward", round(np.mean(e_rewards[-101:-1]), 2), len(e_rewards) / (self.buffer_size * self.batch_size))
                 self.writer.add_scalar("mean_steps", steps / (self.buffer_size * self.batch_size), len(e_rewards) / (self.buffer_size * self.batch_size))
@@ -217,13 +227,11 @@ class Agent():
                 e_rewards = [0.0]
                 action_steps = []
                 
-  
-
-
 
 
 
     np.set_printoptions(threshold=np.inf, linewidth=np.inf) #for debuger
+
     def test(self):
   
         actions = []
@@ -268,12 +276,5 @@ class Agent():
                 print("mean 100 episode reward: {}".format(round(np.mean(e_rewards[-101:-1]), 2)))
                 print("************************************************")
                 steps = 0
-
-agent = Agent()
-agent.train()
-# agent.test()
-
-    
-
 
         
