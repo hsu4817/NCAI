@@ -55,7 +55,7 @@ class A2C_LSTM(nn.Module):
         super(A2C_LSTM, self).__init__()
 
         self.glyph_shape = (21, 79)
-        self.blstats_shape = 26
+        self.blstats_shape = 27
         self.num_actions = 23
         self.h = self.glyph_shape[0]
         self.w = self.glyph_shape[1]

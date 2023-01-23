@@ -48,7 +48,7 @@ class ExampleAgent():
             if not self.flags.no_render:
                 print("-" * 8 + " " * 71)
                 print(f"Previous reward: {str(reward):64s}")
-                act_str = repr(env._actions[action]) if action is not None else ""
+                act_str = repr(env.actions[action]) if action is not None else ""
                 print(f"Previous action: {str(act_str):64s}")
                 print("-" * 8)
                 env.render(self.flags.render_mode)
