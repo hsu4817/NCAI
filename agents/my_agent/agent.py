@@ -111,6 +111,7 @@ class Floor():
     def __init__(self):
         self.room = []
         self.corridor = []
+        self.interesting = []
         
         self.current_place = None
         self.parent = [[None for _ in range(79)] for _ in range(21)]
@@ -121,6 +122,7 @@ class Floor():
         self.search_completed = False
         self.goal = None
         self.search_pos = None
+        self.in_room = True
 
         self.last_pos = None
         self.frozen_cnt = 0
@@ -181,12 +183,30 @@ class Floor():
             
             #해당 좌표에 자식 리스트 추가
             self.children[y][x] = children_list
-        
+
+        prior = 0
+        if self.interesting:
+            dist_nearby = 100
+            nearby = None
+            for dest in self.interesting:
+                dist = manhattan_distance(dest, (y,x))
+                if dist < dist_nearby:
+                    nearby = dest
+                    dist_nearby = dist
+            dy = 0 if nearby[0] == y else (nearby[0] - y) // abs(nearby[0] - y)
+            dx = 0 if nearby[1] == x else (nearby[1] - x) // abs(nearby[1] - x)
+            for i in range(8):
+                if self.dxy[i] == (dy, dx):
+                    prior = i
+        elif self.goal is not None:
+            self.search_completed = True
+            return [19]
+
         for i in range(8):
-            ny = y + self.dxy[i][0]
-            nx = x + self.dxy[i][1]
-            if (0 <= ny < 21 and 0 <= nx < 79) and self.children[y][x][i] and not self.visited[ny][nx]:
-                action = i+1
+            ny = y + self.dxy[(i + prior) % 8][0]
+            nx = x + self.dxy[(i + prior) % 8][1]
+            if (0 <= ny < 21 and 0 <= nx < 79) and self.children[y][x][(i + prior) % 8] and not self.visited[ny][nx]:
+                action = (i + prior) % 8 + 1
                 return [action]
             
         # 막다른 길에서는 search로 길 찾기 트라이
@@ -223,13 +243,14 @@ class Floor():
     
     def preprocess_map(self, obs):
         pre = []
-
+        self.interesting = []
         available = [ord('.'), ord('#')]
         unavailable = [ord(' '), ord('`')]
         door_or_wall = [ord('|'), ord('-')]
 
         chars = obs['chars']
         colors = obs['colors']
+
         for y in range(21):
             pre_line = []
             for x in range(79):
@@ -245,6 +266,13 @@ class Floor():
                     pre_char = False
                 elif char == ord('>'):
                     self.goal = (x, y)
+ 
+                if pre_char:
+                    for i in (0,2,1,3):
+                        if chars[y + self.dxy[i][0]][x + self.dxy[i][1]] == ord(' '):
+                            self.interesting.append((y,x))
+                            break
+
                 pre_line.append(pre_char)
             pre.append(pre_line)
         return pre
@@ -384,10 +412,12 @@ class Agent(ExampleAgent):
 
     # get_action without error
     def get_action(self, env, obs):
+        return self.action_select(env, obs)
+    '''
         try:
-            return self.action_select(env, obs)
+            
         except:
-            return 19
+            return 19'''
 
     def action_select(self, env, obs):
         time = obs['blstats'][20]

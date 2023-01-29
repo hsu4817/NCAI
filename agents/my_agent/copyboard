@@ -1,0 +1,68 @@
+        prior = 0
+        '''
+        if self.interesting:
+            dist_nearby = 100
+            nearby = None
+            for dest in self.interesting:
+                dist = manhattan_distance(dest, (y,x))
+                if dist < dist_nearby:
+                    nearby = dest
+                    dist_nearby = dist
+            dy = 0 if nearby[0] == y else (nearby[y] - y) // (nearby[y] - y)
+            dx = 0 if nearby[1] == x else (nearby[x] - x) // (nearby[x] - x)
+            for i in range(8):
+                if self.dxy[i] == (dy, dx):
+                    prior = i
+        '''
+
+        '''
+        while walls_updated:
+            pivot = walls_updated[0]
+
+            for d in (0, 2):
+                corners = []
+
+                y, x = pivot[0], pivot[1]
+                direc = None
+                if chars[y][x] == ord('-'):
+                    direc = (3 + d) % 4
+                else :
+                    direc = 0 + d
+                
+                while self.walls[y][x]:
+                    for i, wall in enumerate(walls_updated):
+                        if (y, x) == wall:
+                            walls_updated.pop(i)
+
+                    ny, nx = y + self.dxy[direc][0], x + self.dxy[direc][1]
+                    if not self.walls[ny][nx]:
+                        prev_dir = direc
+                        for i in (1, 3):
+                            ny, nx = y + self.dxy[(direc + i) % 4][0], x + self.dxy[(direc + i) % 4][1]
+                            if self.walls[ny][nx]:
+                                direc = (direc + i) % 4
+                        if prev_dir == direc:
+                            for i in (0,1,3):
+                                ny, nx = y + self.dxy[(direc+i)%4][0]*2, x + self.dxy[(direc+i)%4][1]*2
+                                if self.walls[ny][nx]:
+                                    direc = (direc + i) % 4
+
+                        if prev_dir != direc:
+                            corners.append((y,x))
+                    
+                    y, x = ny, nx
+
+                        
+                    if y == pivot[0] and x == pivot[1]:
+                        break
+                
+                if len(corners) == 4:
+                    exist = False
+                    for room in self.room:
+                        if corners[0] in room[0]:
+                            exist = True
+                            break
+                    if not exist:
+                        self.room.append([corners])
+                        break 
+        '''
