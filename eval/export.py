@@ -13,7 +13,20 @@ import seaborn as sns
 
 from . import config
 
+matplotlib.rc("font", family="NanumMyeongjo")
+# 폰트 설치
+#   sudo apt-get install fonts-nanum*
+# 폰트 캐시삭제:
+#   rm -rf ~/.cache/matplotlib/*
+# 확인:
+#   import matplotlib.font_manager
+#   print([f.fname for f in matplotlib.font_manager.fontManager.ttflist])
+# matplotlib.rc('font', family="Noto Sans Mono CJK KR")  # sudo apt install  fonts-noto-cjk
+# matplotlib.font_manager._rebuild()
+FIG_SIZE = (13, 13)
+
 logger = logging.getLogger(__name__)
+
 
 def export_results(config):
     df = pd.read_csv(config.out_file, names=config.csv_columns)
@@ -40,20 +53,20 @@ def export_results(config):
     df_play_time = df[["agent", "play_time"]].groupby("agent")
     mean_play_time = df_play_time.mean()
 
-    #mean score bar graph
+    # mean score bar graph
     names = mean_score.index.to_list()
     plt.bar(np.arange(len(names)), mean_score["score"].to_list())
     plt.xticks(np.arange(len(names)), names)
     plt.savefig(config.fig_dir / "mean_score.png")
     plt.clf()
 
-    #median score bar graph
+    # median score bar graph
     plt.bar(np.arange(len(names)), median_score["score"].to_list())
     plt.xticks(np.arange(len(names)), names)
     plt.savefig(config.fig_dir / "median_score.png")
     plt.clf()
 
-    #mean play time bar graph
+    # mean play time bar graph
     plt.bar(np.arange(len(names)), mean_play_time["play_time"].to_list())
     plt.xticks(np.arange(len(names)), names)
     plt.savefig(config.fig_dir / "mean_play_time.png")
@@ -79,9 +92,10 @@ def export_results(config):
     #
     write_readme(config, run_start, run_end)
 
+
 def write_readme(config, run_start, run_end):
     def csv_to_table(filename):
-        buff = f"""
+        buff = """
 .. list-table::
    :header-rows: 1
 
@@ -146,6 +160,7 @@ NCF2022 결과
 
 """
         f.write(content)
+
 
 if __name__ == "__main__":
     export_results(config)

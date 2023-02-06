@@ -15,7 +15,11 @@ team_repo_url = {
     ## 예제 ##
     "Example10": "https://github.com/rex8312/NCF2022",
     ## 참가자 ##
-
+    "ChurAI": "https://github.com/15479/NCF2022-CHURAI",
+    "CHack": "https://github.com/1105nam/NCF2022",
+    "계속집가고싶다": "https://github.com/yoonjun333/NCAI",
+    "머닝러신": "https://github.com/Maning-Learchine/NCF22-NetHack",
+    "일곱번째 감자튀김": "https://github.com/2022-NC-Fellowship/NCF2022-seven-potato",
 }
 
 
@@ -36,10 +40,10 @@ config_loader.update(
         export_results=True,
         publish_results=True,
         # 게임 플레이 옵션
-        runs=100,
-        timeout=1800,
+        runs=3,
+        timeout=300,
         verbose=1,  # INFO까지 출력
-        env="NetHackChallenge-v0",
+        env="NetHackScore-v0",
     )
 )
 config_loader.parse()
@@ -83,7 +87,7 @@ class Team:
     class_path: str
 
 
-teams = dict()
+teams = {}
 for name, repo_url in team_repo_url.items():
     user_id, repo_name = repo_url.split("https://github.com/")[1].split("/")
     team_temp_dir = team_dir / user_id

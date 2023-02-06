@@ -1,12 +1,15 @@
 import argparse
 import datetime
 import importlib
+import json
 import logging
 import os
+import re
 import shlex
 import subprocess
+import traceback
+from types import SimpleNamespace
 from pathlib import Path
-import re
 
 from tqdm import tqdm
 
@@ -16,46 +19,44 @@ logger = logging.getLogger(__name__)
 def run_play_game(agent, env, seed, timeout, verbose):
 
     # agent example -> agents.my_agent
-    cmd = f"python -m eval.play_game --agent={agent} --env={env} --seed={seed}"
+    save_dir = "nle_data/play_data"
+    cmd = f"python -m eval.play_game --agent={agent} --env={env} --seed={seed} --savedir={save_dir}"
 
-    result = [0.0, 0.0]
-    remain = 3  # 시간 초과발생할 경우 최대 3번까지 재시도
-    log_buff = []
-    while remain > 0:
-        remain -= 1
+    result = {}
+    log_buff = [f"{cmd}\n\n"]
+    ttyrec = None
+    try:
+        # ttyrec 파일 모두 삭제
+        [p.unlink() for p in Path(save_dir).glob("*.bz2")]
 
-        try:
-            pout = subprocess.run(
-                shlex.split(cmd),
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                timeout=timeout,
-            )
+        pout = subprocess.run(
+            shlex.split(cmd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=timeout,
+        )
 
-            stdout_line = pout.stdout.split(b"\n")
-            stdout_line = [line.rstrip().decode("utf-8") for line in stdout_line]
-            stderr_line = pout.stderr.split(b"\n")
-            stderr_line = [line.rstrip().decode("utf-8") for line in stderr_line]
-            lines = (
-                [f"{cmd}\n\n"]
-                + ["## STDOUT ##\n"]
-                + stdout_line
-                + ["\n## STDERR ##\n"]
-                + stderr_line
-            )
-            log_buff += lines
+        ttyrec = [p for p in Path(save_dir).glob("*.bz2")][0]
 
-            result[0] = float(re.split('[, ]', stdout_line[0])[-1])
-            result[1] = float(re.split('[, ]', stdout_line[0])[2])
+        stdout_line = pout.stdout.split(b"\n")
+        stdout_line = [line.rstrip().decode("utf-8") for line in stdout_line]
+        stderr_line = pout.stderr.split(b"\n")
+        stderr_line = [line.rstrip().decode("utf-8") for line in stderr_line]
+        lines = ["## STDOUT ##\n"] + stdout_line + ["\n## STDERR ##\n"] + stderr_line
+        log_buff += lines
 
-            break
+        if len(stdout_line) > 1:
+            result = json.loads(stdout_line[-2])
 
-        except subprocess.TimeoutExpired:
-            # 비정상적으로 게임이 종료된 경우
-            # 시간초과
-            result = [0.0, 0.0]
+    except subprocess.TimeoutExpired:
+        # 비정상적으로 게임이 종료된 경우
+        # 시간초과
+        log_buff += ["\nTimeout Expired\n"]
 
-    return result, log_buff
+    except json.decoder.JSONDecodeError:
+        breakpoint()
+
+    return result, log_buff, ttyrec
 
 
 def play_game(args):
@@ -64,16 +65,15 @@ def play_game(args):
         module = args.agent
         name = "Agent"
         agent = getattr(importlib.import_module(module), name)(args)
+        result = agent.evaluate(args.env, args.savedir, args.max_steps, args.seed)
 
-        result = agent.evaluate(args.seed)
-    
     # except (AttributeError, ImportError):
     except Exception as e:
         import traceback
 
-        logger.error(f"Agent 클래스를 임포트 할 수 없음: {agent_path}, {e}")
+        logger.error(f"Agent 클래스를 임포트 할 수 없음: {module}, {e}")
         traceback.print_exc()
-        result = [0.0, 0.0]
+        result = json.dumps({})
     return result
 
 
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--env",
         type=str,
-        default="NetHackChallenge-v0",
+        default="NetHackScore-v0",
     )
     parser.add_argument(
         "--seed",
@@ -110,7 +110,7 @@ if __name__ == "__main__":
         choices=["test", "train"],
         help="Test or train. Defaults to 'test'",
     )
-    
+
     args = parser.parse_args()
 
     result = play_game(args)

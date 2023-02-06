@@ -6,6 +6,7 @@ import random
 import termios
 import time
 import timeit
+import json
 import tty
 import importlib
 import statistics
@@ -15,19 +16,27 @@ import gym
 import nle  # noqa: F401
 from nle import nethack
 
-class ExampleAgent():
+
+class ExampleAgent:
     def __init__(self, FLAGS=None):
         self.flags = FLAGS
+        self.task_actions = tuple(
+            [nethack.MiscAction.MORE]
+            + list(nethack.CompassDirection)
+            + list(nethack.CompassDirectionLonger)
+            + list(nethack.MiscDirection)
+            + [nethack.Command.KICK, nethack.Command.EAT, nethack.Command.SEARCH]
+        )
 
     def go_back(self, num_lines):
         print("\033[%dA" % num_lines)
 
     def get_action(self):
-        raise NotImplementedError('Should implement get_action function')
+        raise NotImplementedError("Should implement get_action function")
 
     def run_episodes(self):
         env = self.env
-        
+
         obs = env.reset()
 
         steps = 0
@@ -55,9 +64,9 @@ class ExampleAgent():
                 print("-" * 8)
                 print(obs["blstats"])
                 self.go_back(num_lines=33)
-            
+
             # NLE는 done=True일 때 obs가 초기화되기 때문에, step 이전에 score를 저장
-            score = obs['blstats'][9]
+            score = obs["blstats"][9]
 
             action = self.get_action(env, obs)
 
@@ -68,7 +77,7 @@ class ExampleAgent():
 
             # lstm 모델의 경우 h_t, c_t를 매 episode마다 초기화
             if self.flags.use_lstm:
-                self.h_t, self.c_t = self.h_t*(1.0 - done), self.c_t*(1.0 - done)
+                self.h_t, self.c_t = self.h_t * (1.0 - done), self.c_t * (1.0 - done)
             steps += 1
 
             if not done and steps < self.flags.max_steps:
@@ -92,59 +101,76 @@ class ExampleAgent():
 
             if episodes == self.flags.ngames:
                 break
-            
+
             obs = env.reset()
 
         env.close()
-        ret = "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f" % (episodes, timeit.default_timer() - total_start_time, mean_sps, sum(scores)/episodes, statistics.median(scores))
+        ret = (
+            "Finished after %i episodes and %f seconds, Mean sps: %f, Avg score: %f, Median score: %f"
+            % (
+                episodes,
+                timeit.default_timer() - total_start_time,
+                mean_sps,
+                sum(scores) / episodes,
+                statistics.median(scores),
+            )
+        )
         print(ret)
-    
+
     def is_more(self, screen):
         for line in screen:
-            interp = ''
+            interp = ""
             for letter in line:
                 interp += chr(letter)
 
-                if 'More' in interp:
+                if "More" in interp:
                     return True
         return False
 
     def is_yn(self, screen):
         for line in screen:
-            interp = ''
+            interp = ""
             for letter in line:
                 interp += chr(letter)
-            
-            if '[yn]' in interp:
+
+            if "[yn]" in interp:
                 return True
         return False
 
     def is_locked(self, screen):
         for line in screen:
-            interp = ''
+            interp = ""
             for letter in line:
                 interp += chr(letter)
-            
-            if 'locked' in interp:
+
+            if "locked" in interp:
                 return True
         return False
-    
+
     def asking_direction(self, screen):
         for line in screen:
-            interp = ''
+            interp = ""
             for letter in line:
                 interp += chr(letter)
-            
-            if 'direction?' in interp:
+
+            if "direction?" in interp:
                 return True
         return False
 
     def preprocess_map(self, obs):
-        raise NotImplementedError('Should implement preprocess_map if you need.')
-    
-    def evaluate(self, seed):
-        env = self.env
-        
+        raise NotImplementedError("Should implement preprocess_map if you need.")
+
+    def evaluate(self, env, save_dir, max_steps, seed):
+
+        env = gym.make(
+            env,
+            actions=self.task_actions,
+            savedir=save_dir,
+            max_episode_steps=max_steps,
+            allow_all_yn_questions=True,
+            allow_all_modes=True,
+        )
+
         env.seed(seed, seed)
         obs = env.reset()
 
@@ -160,7 +186,7 @@ class ExampleAgent():
         start_time = total_start_time
 
         while True:
-            score = obs['blstats'][9]
+            score = float(obs["blstats"][9])
 
             action = self.get_action(env, obs)
 
@@ -175,12 +201,17 @@ class ExampleAgent():
 
             time_delta = timeit.default_timer() - start_time
             sps = steps / time_delta
-            
+
             break
 
         env.close()
 
-        ret = "Finished after %f seconds, sps: %f, score: %f" % (timeit.default_timer() - total_start_time, sps, score)
-        print(ret)
-
-        return ret
+        # ret = "Finished after %f seconds, sps: %f, score: %f" % (
+        #     timeit.default_timer() - total_start_time,
+        #     sps,
+        #     score,
+        # )
+        etime = timeit.default_timer() - total_start_time
+        result = json.dumps(dict(etime=etime, sps=sps, score=score))
+        print(result)
+        return result
