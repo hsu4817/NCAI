@@ -50,6 +50,7 @@ def run_play_game(agent, env, seed, timeout, verbose):
         # 비정상적으로 게임이 종료된 경우
         # 시간초과
         log_buff += ["\nTimeout Expired\n"]
+        result["etime"] = timeout
 
     except json.decoder.JSONDecodeError:
         breakpoint()
@@ -57,7 +58,7 @@ def run_play_game(agent, env, seed, timeout, verbose):
     return result, log_buff, ttyrec
 
 
-def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed):
+def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, timeout=60):
 
     env = gym.make(
         env_name,
@@ -79,11 +80,14 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed):
     mean_sps = 0
     mean_reward = 0.0
 
+    get_score = lambda obs_: float(obs_["blstats"][9])
+
     total_start_time = timeit.default_timer()
     start_time = total_start_time
+    check = (start_time, get_score(obs))
 
     while True:
-        score = float(obs["blstats"][9])
+        score = get_score(obs)
 
         action = agent.get_action(env, obs)
 
@@ -93,13 +97,26 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed):
         obs, reward, done, info = env.step(action)
         steps += 1
 
-        if not done and steps < max_steps:
-            continue
+        if done:
+            print("> 환경종료")
 
-        time_delta = timeit.default_timer() - start_time
-        sps = steps / time_delta
+        if steps > max_steps:
+            print("> 최대 step 초과")
+            done = True
 
-        break
+        if timeit.default_timer() - check[0] > timeout:
+            if check[1] >= score:
+                # 현재 점수가 timeout안에 갱신되지 않으면 종료
+                print(f"> {check[0]-start_time:.2f}초 이후 점수가 증가하지 않아 종료")
+                done = True
+
+        if done:
+            time_delta = timeit.default_timer() - start_time
+            sps = steps / time_delta
+            break
+
+        if score > check[1]:
+            check = (timeit.default_timer(), score)
 
     env.close()
 

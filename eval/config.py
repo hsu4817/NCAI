@@ -40,8 +40,8 @@ config_loader.update(
         export_results=True,
         publish_results=True,
         # 게임 플레이 옵션
-        runs=3,
-        timeout=300,
+        runs=25,
+        timeout=600,
         verbose=1,  # INFO까지 출력
         env="NetHackScore-v0",
     )

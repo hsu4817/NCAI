@@ -13,17 +13,6 @@ import seaborn as sns
 
 from . import config
 
-matplotlib.rc("font", family="NanumMyeongjo")
-# 폰트 설치
-#   sudo apt-get install fonts-nanum*
-# 폰트 캐시삭제:
-#   rm -rf ~/.cache/matplotlib/*
-# 확인:
-#   import matplotlib.font_manager
-#   print([f.fname for f in matplotlib.font_manager.fontManager.ttflist])
-# matplotlib.rc('font', family="Noto Sans Mono CJK KR")  # sudo apt install  fonts-noto-cjk
-# matplotlib.font_manager._rebuild()
-FIG_SIZE = (13, 13)
 
 logger = logging.getLogger(__name__)
 
@@ -55,21 +44,49 @@ def export_results(config):
 
     # mean score bar graph
     names = mean_score.index.to_list()
-    plt.bar(np.arange(len(names)), mean_score["score"].to_list())
-    plt.xticks(np.arange(len(names)), names)
-    plt.savefig(config.fig_dir / "mean_score.png")
+    sorted_names = [names[i] for i in np.argsort(-np.array(mean_score["score"]))]
+
+    # sns.set_theme(style="ticks")
+    matplotlib.rc("font", family="NanumMyeongjo")
+    # matplotlib.rc("font", family="NanumMyeongjo")
+    # plt.rcParams["font.family"] = "NanumGothic"
+    # 폰트 설치
+    #   sudo apt-get install fonts-nanum*
+    # 폰트 캐시삭제:
+    #   rm -rf ~/.cache/matplotlib/*
+    # 확인:
+    #   import matplotlib.font_manager
+    #   print([f.fname for f in matplotlib.font_manager.fontManager.ttflist])
+    # matplotlib.rc('font', family="Noto Sans Mono CJK KR")  # sudo apt install  fonts-noto-cjk
+    # matplotlib.font_manager._rebuild()
+    FIG_SIZE = (10, 6)
+
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.barplot(
+        x="score", y="agent", data=df, order=sorted_names, errorbar=None, palette="vlag"
+    )
+    for p in ax.patches:
+        h, w, x, y = p.get_height(), p.get_width(), p.get_x(), p.get_y()
+        xy = (w / 2, y + h / 2.0)
+        # text = f"Mean:\n{h:0.2f}"
+        text = f"{w:0.2f}"
+        ax.annotate(text=text, xy=xy, ha="center", va="center")
+    plt.savefig(config.fig_dir / "mean_score.png", bbox_inches="tight")
     plt.clf()
+    # breakpoint()
 
     # median score bar graph
-    plt.bar(np.arange(len(names)), median_score["score"].to_list())
-    plt.xticks(np.arange(len(names)), names)
-    plt.savefig(config.fig_dir / "median_score.png")
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.boxplot(x="score", y="agent", data=df, order=sorted_names, palette="vlag")
+    sns.stripplot(x="score", y="agent", data=df, order=sorted_names, color=".3")
+    plt.savefig(config.fig_dir / "median_score.png", bbox_inches="tight")
     plt.clf()
 
     # mean play time bar graph
-    plt.bar(np.arange(len(names)), mean_play_time["play_time"].to_list())
-    plt.xticks(np.arange(len(names)), names)
-    plt.savefig(config.fig_dir / "mean_play_time.png")
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.boxplot(x="play_time", y="agent", data=df, order=sorted_names, palette="vlag")
+    sns.stripplot(x="play_time", y="agent", data=df, order=sorted_names, color=".3")
+    plt.savefig(config.fig_dir / "mean_play_time.png", bbox_inches="tight")
     plt.clf()
 
     #
@@ -83,7 +100,7 @@ def export_results(config):
     summary = pd.concat(kv.values(), axis=1, sort=True)
     summary.index.name = "agent"
     summary.columns = kv.keys()
-    summary = summary.sort_values(by="median score", ascending=False)
+    summary = summary.sort_values(by="mean score", ascending=False)
 
     summary.to_csv(config.summary_dir / "summary.csv")
 
