@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/home/hspark8312/desktop/NCF2022/eval/run.py", line 96, in play_games
+    result, log_buff, ttyrec = run_play_game(
+  File "/home/hspark8312/desktop/NCF2022/eval/play_game.py", line 37, in run_play_game
+    ttyrec = [p for p in Path(save_dir).glob("*.bz2")][0]
+IndexError: list index out of range
+
+
+
+## RESULT ##
+
+일곱번째 감자튀김,9,-1.0,-1.0,2023-02-07T15:56:31.327834

@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-07T16-49-30.team.2022-NC-Fellowship.agents.example10.agent --env=NetHackScore-v0 --seed=1344119250915686367 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 90.26초 이후 점수가 증가하지 않아 종료
+{"etime": 150.40619527129456, "sps": 12.421450693573826, "score": 334.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+일곱번째 감자튀김,39,334.0,150.40619527129456,2023-02-07T19:02:22.341502

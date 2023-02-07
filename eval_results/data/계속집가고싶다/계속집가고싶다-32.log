@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-07T16-49-30.team.yoonjun333.agents.example10.agent --env=NetHackScore-v0 --seed=8788084610292768996 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 환경종료
+{"etime": 36.956921976991, "sps": 50.81664347876736, "score": 191.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+계속집가고싶다,32,191.0,36.956921976991,2023-02-07T18:19:43.140270

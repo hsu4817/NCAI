@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-07T16-49-30.team.2022-NC-Fellowship.agents.example10.agent --env=NetHackScore-v0 --seed=4215443077366918183 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 환경종료
+{"etime": 54.23281528800726, "sps": 22.188118066982096, "score": 192.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+일곱번째 감자튀김,34,192.0,54.23281528800726,2023-02-07T18:32:53.125177
