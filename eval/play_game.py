@@ -1,17 +1,15 @@
 import argparse
-import datetime
 import importlib
 import json
 import logging
-import os
-import re
 import shlex
 import subprocess
-import traceback
-from types import SimpleNamespace
+import timeit
 from pathlib import Path
 
-from tqdm import tqdm
+import gym
+
+from ExampleAgent import ExampleAgent
 
 logger = logging.getLogger(__name__)
 
@@ -59,13 +57,65 @@ def run_play_game(agent, env, seed, timeout, verbose):
     return result, log_buff, ttyrec
 
 
+def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed):
+
+    env = gym.make(
+        env_name,
+        actions=agent.task_actions,
+        savedir=save_dir,
+        max_episode_steps=max_steps,
+        allow_all_yn_questions=True,
+        allow_all_modes=True,
+    )
+
+    env.seed(seed, seed)
+    obs = env.reset()
+
+    steps = 0
+    episodes = 0
+    reward = 0.0
+    action = None
+
+    mean_sps = 0
+    mean_reward = 0.0
+
+    total_start_time = timeit.default_timer()
+    start_time = total_start_time
+
+    while True:
+        score = float(obs["blstats"][9])
+
+        action = agent.get_action(env, obs)
+
+        if action is None:
+            break
+
+        obs, reward, done, info = env.step(action)
+        steps += 1
+
+        if not done and steps < max_steps:
+            continue
+
+        time_delta = timeit.default_timer() - start_time
+        sps = steps / time_delta
+
+        break
+
+    env.close()
+
+    etime = timeit.default_timer() - total_start_time
+    result = json.dumps(dict(etime=etime, sps=sps, score=score))
+    print(result)
+    return result
+
+
 def play_game(args):
     # agent 초기화
     try:
         module = args.agent
         name = "Agent"
         agent = getattr(importlib.import_module(module), name)(args)
-        result = agent.evaluate(args.env, args.savedir, args.max_steps, args.seed)
+        result = evaluate(agent, args.env, args.savedir, args.max_steps, args.seed)
 
     # except (AttributeError, ImportError):
     except Exception as e:
