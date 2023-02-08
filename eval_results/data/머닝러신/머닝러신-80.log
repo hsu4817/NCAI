@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-08T11-21-16.team.Maning-Learchine.agents.example10.agent --env=NetHackScore-v0 --seed=2708649404171065435 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 54.88초 이후 점수가 증가하지 않아 종료
+{"etime": 115.35578953800723, "sps": 16.066375627160703, "score": 355.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+머닝러신,80,355.0,115.35578953800723,2023-02-08T16:13:20.544911

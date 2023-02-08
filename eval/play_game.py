@@ -85,6 +85,7 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
     total_start_time = timeit.default_timer()
     start_time = total_start_time
     check = (start_time, get_score(obs))
+    error = False
 
     while True:
         score = get_score(obs)
@@ -92,6 +93,7 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
         action = agent.get_action(env, obs)
 
         if action is None:
+            error = True
             break
 
         obs, reward, done, info = env.step(action)
@@ -102,12 +104,14 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
 
         if steps > max_steps:
             print("> 최대 step 초과")
+            error = True
             done = True
 
         if timeit.default_timer() - check[0] > timeout:
             if check[1] >= score:
                 # 현재 점수가 timeout안에 갱신되지 않으면 종료
                 print(f"> {check[0]-start_time:.2f}초 이후 점수가 증가하지 않아 종료")
+                error = True
                 done = True
 
         if done:
@@ -121,7 +125,7 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
     env.close()
 
     etime = timeit.default_timer() - total_start_time
-    result = json.dumps(dict(etime=etime, sps=sps, score=score))
+    result = json.dumps(dict(etime=etime, sps=sps, score=score, error=error))
     print(result)
     return result
 

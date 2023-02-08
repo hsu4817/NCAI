@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-08T11-21-16.team.yoonjun333.agents.example10.agent --env=NetHackScore-v0 --seed=9108438092474426658 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 49.61초 이후 점수가 증가하지 않아 종료
+{"etime": 109.94239522796124, "sps": 10.534011087837612, "score": 54.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+계속집가고싶다,74,54.0,109.94239522796124,2023-02-08T15:26:03.944297
