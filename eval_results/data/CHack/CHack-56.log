@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-08T11-21-16.team.1105nam.agents.CHack.agent --env=NetHackScore-v0 --seed=9197967510925151750 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 0.00초 이후 점수가 증가하지 않아 종료
+{"etime": 60.005609032232314, "sps": 1119.4227615928182, "score": 0.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+CHack,56,0.0,60.005609032232314,2023-02-08T13:05:52.117449

@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-08T11-21-16.team.Maning-Learchine.agents.example10.agent --env=NetHackScore-v0 --seed=515155189587793810 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 환경종료
+{"etime": 23.855843011289835, "sps": 81.8185220742438, "score": 65.0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+머닝러신,82,65.0,23.855843011289835,2023-02-08T16:29:34.204837
