@@ -1,9 +1,10 @@
-python -m eval.play_game --agent=__temp__.2023-02-07T11-30-23.team.15479.agents.my_agent.agent --env=NetHackScore-v0 --seed=334411393070730234 --savedir=nle_data/play_data
+python -m eval.play_game --agent=__temp__.2023-02-08T20-08-03.team.15479.agents.my_agent.agent --env=NetHackScore-v0 --seed=1903035181525914594 --savedir=nle_data/play_data
 
 
 ## STDOUT ##
 
-{"etime": 26.849533563945442, "sps": 60.13072387202952, "score": 7.0}
+> 환경종료
+{"etime": 375.9027743800543, "sps": 58.492988789931744, "score": 808.0, "error": 0}
 
 
 ## STDERR ##
@@ -12,4 +13,4 @@ python -m eval.play_game --agent=__temp__.2023-02-07T11-30-23.team.15479.agents.
 
 ## RESULT ##
 
-ChurAI,3,7.0,26.849533563945442,2023-02-07T11:33:39.451725
+ChurAI,3,808.0,375.9027743800543,0,1903035181525914594,2023-02-08T20:23:48.985245

@@ -20,7 +20,7 @@ def run_play_game(agent, env, seed, timeout, verbose):
     save_dir = "nle_data/play_data"
     cmd = f"python -m eval.play_game --agent={agent} --env={env} --seed={seed} --savedir={save_dir}"
 
-    result = {}
+    result = {"error": 1}
     log_buff = [f"{cmd}\n\n"]
     ttyrec = None
     try:
@@ -34,7 +34,9 @@ def run_play_game(agent, env, seed, timeout, verbose):
             timeout=timeout,
         )
 
-        ttyrec = [p for p in Path(save_dir).glob("*.bz2")][0]
+        ttyrecs = [p for p in Path(save_dir).glob("*.bz2")]
+        if len(ttyrecs) > 0:
+            ttyrec = ttyrecs[0]
 
         stdout_line = pout.stdout.split(b"\n")
         stdout_line = [line.rstrip().decode("utf-8") for line in stdout_line]
@@ -51,6 +53,7 @@ def run_play_game(agent, env, seed, timeout, verbose):
         # 시간초과
         log_buff += ["\nTimeout Expired\n"]
         result["etime"] = timeout
+        result["error"] = 1
 
     except json.decoder.JSONDecodeError:
         breakpoint()
@@ -58,7 +61,9 @@ def run_play_game(agent, env, seed, timeout, verbose):
     return result, log_buff, ttyrec
 
 
-def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, timeout=60):
+def evaluate(
+    agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, timeout=120
+):
 
     env = gym.make(
         env_name,
@@ -85,7 +90,7 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
     total_start_time = timeit.default_timer()
     start_time = total_start_time
     check = (start_time, get_score(obs))
-    error = False
+    error = 0
 
     while True:
         score = get_score(obs)
@@ -93,7 +98,7 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
         action = agent.get_action(env, obs)
 
         if action is None:
-            error = True
+            error = 1
             break
 
         obs, reward, done, info = env.step(action)
@@ -104,14 +109,14 @@ def evaluate(agent: ExampleAgent, env_name: str, save_dir, max_steps, seed, time
 
         if steps > max_steps:
             print("> 최대 step 초과")
-            error = True
+            error = 1
             done = True
 
         if timeit.default_timer() - check[0] > timeout:
             if check[1] >= score:
                 # 현재 점수가 timeout안에 갱신되지 않으면 종료
                 print(f"> {check[0]-start_time:.2f}초 이후 점수가 증가하지 않아 종료")
-                error = True
+                error = 1
                 done = True
 
         if done:

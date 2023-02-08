@@ -102,6 +102,8 @@ csv_columns = [
     "run",
     "score",
     "play_time",
+    "error",
+    "seed",
     "dates",
 ]
 

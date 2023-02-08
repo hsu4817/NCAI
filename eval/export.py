@@ -42,6 +42,12 @@ def export_results(config):
     df_play_time = df[["agent", "play_time"]].groupby("agent")
     mean_play_time = df_play_time.mean()
 
+    #
+    # 에러률
+    #
+    df_error = df[["agent", "error"]].groupby("agent")
+    error_ratio = df_error.mean()
+
     # mean score bar graph
     names = mean_score.index.to_list()
     sorted_names = [names[i] for i in np.argsort(-np.array(mean_score["score"]))]
@@ -73,7 +79,6 @@ def export_results(config):
         ax.annotate(text=text, xy=xy, ha="center", va="center")
     plt.savefig(config.fig_dir / "mean_score.png", bbox_inches="tight")
     plt.clf()
-    # breakpoint()
 
     # median score bar graph
     f, ax = plt.subplots(figsize=FIG_SIZE)
@@ -89,6 +94,19 @@ def export_results(config):
     plt.savefig(config.fig_dir / "mean_play_time.png", bbox_inches="tight")
     plt.clf()
 
+    # 에러율
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.barplot(
+        x="error", y="agent", data=df, order=sorted_names, errorbar=None, palette="vlag"
+    )
+    for p in ax.patches:
+        h, w, x, y = p.get_height(), p.get_width(), p.get_x(), p.get_y()
+        xy = (w / 2, y + h / 2.0)
+        text = f"{w:0.2f}"
+        ax.annotate(text=text, xy=xy, ha="left", va="center")
+    plt.savefig(config.fig_dir / "error_ratio.png", bbox_inches="tight")
+    plt.clf()
+
     #
     # TABLE
     #
@@ -96,6 +114,7 @@ def export_results(config):
         "mean score": mean_score,
         "median score": median_score,
         "play time": mean_play_time,
+        "error ratio": error_ratio,
     }
     summary = pd.concat(kv.values(), axis=1, sort=True)
     summary.index.name = "agent"
@@ -173,6 +192,11 @@ NCF2022 결과
 **플레이 시간 분포**
 
 .. figure:: fig/mean_play_time.png
+   :figwidth: 200
+
+**에러율**
+
+.. figure:: fig/error_ratio.png
    :figwidth: 200
 
 """

@@ -109,6 +109,7 @@ def play_games(config, run_start, run_end, verbose):
                     f.write(f"{traceback.format_exc()}\n")
 
             tqdm.write(colored(f"  - Score: {result.get('score', -1.0)}", "yellow"))
+            tqdm.write(colored(f"  - error: {result.get('error', 0)}", "yellow"))
             tqdm.write(colored(f"  - time: {time.monotonic() - start}", "yellow"))
 
             # 결과 기록
@@ -122,15 +123,24 @@ def play_games(config, run_start, run_end, verbose):
                             n,
                             result.get("score", -1.0),
                             result.get("etime", -1.0),
+                            result.get("error", 0),
+                            seed,
                             datetime.now().isoformat(),
                         ],
                     )
                 )
             ]
             log_path.write_text("\n".join(log_buff))
-            if ttyrec is not None:
-                log_ttyrec = log_path.parent / log_path.name.replace(".log", ".bz2")
-                log_ttyrec.write_bytes(ttyrec.read_bytes())
+            for _ in range(5):
+                if ttyrec is None:
+                    break
+
+                if ttyrec.exists():
+                    log_ttyrec = log_path.parent / log_path.name.replace(".log", ".bz2")
+                    log_ttyrec.write_bytes(ttyrec.read_bytes())
+                    break
+
+                time.sleep(1)
 
 
 def write_out_file(config):
