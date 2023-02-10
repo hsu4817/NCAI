@@ -1,0 +1,27 @@
+python -m eval.play_game --agent=__temp__.2023-02-09T19-50-25.team.2022-NC-Fellowship.agents.example10.agent --env=NetHackScore-v0 --seed=2227682609681985997 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+
+
+## STDERR ##
+
+Agent 클래스를 임포트 할 수 없음: __temp__.2023-02-09T19-50-25.team.2022-NC-Fellowship.agents.example10.agent, Error(s) in loading state_dict for A2C:
+	Missing key(s) in state_dict: "S.0.weight", "S.0.bias", "S.2.weight", "S.2.bias", "S.4.weight", "S.4.bias", "S.6.weight", "S.6.bias", "S.8.weight", "S.8.bias".
+	Unexpected key(s) in state_dict: "extract_crop_representation.0.weight", "extract_crop_representation.0.bias", "extract_crop_representation.2.weight", "extract_crop_representation.2.bias", "extract_crop_representation.4.weight", "extract_crop_representation.4.bias", "extract_crop_representation.6.weight", "extract_crop_representation.6.bias", "extract_crop_representation.8.weight", "extract_crop_representation.8.bias".
+Traceback (most recent call last):
+  File "/home/hspark8312/desktop/NCF2022/eval/play_game.py", line 143, in play_game
+    agent = getattr(importlib.import_module(module), name)(args)
+  File "/home/hspark8312/desktop/NCF2022/__temp__/2023-02-09T19-50-25/team/2022-NC-Fellowship/agents/example10/agent.py", line 31, in __init__
+    self.a2c.load_state_dict(torch.load(self.path))
+  File "/home/hspark8312/miniconda3/envs/nle/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1604, in load_state_dict
+    raise RuntimeError('Error(s) in loading state_dict for {}:\n\t{}'.format(
+RuntimeError: Error(s) in loading state_dict for A2C:
+	Missing key(s) in state_dict: "S.0.weight", "S.0.bias", "S.2.weight", "S.2.bias", "S.4.weight", "S.4.bias", "S.6.weight", "S.6.bias", "S.8.weight", "S.8.bias".
+	Unexpected key(s) in state_dict: "extract_crop_representation.0.weight", "extract_crop_representation.0.bias", "extract_crop_representation.2.weight", "extract_crop_representation.2.bias", "extract_crop_representation.4.weight", "extract_crop_representation.4.bias", "extract_crop_representation.6.weight", "extract_crop_representation.6.bias", "extract_crop_representation.8.weight", "extract_crop_representation.8.bias".
+
+
+## RESULT ##
+
+일곱번째 감자튀김,88,-1.0,-1.0,1,2227682609681985997,2023-02-09T23:00:23.271374

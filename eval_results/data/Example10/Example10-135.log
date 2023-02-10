@@ -1,0 +1,16 @@
+python -m eval.play_game --agent=__temp__.2023-02-09T19-50-25.team.rex8312.agents.example10.agent --env=NetHackScore-v0 --seed=4252575383910442738 --savedir=nle_data/play_data
+
+
+## STDOUT ##
+
+> 환경종료
+{"etime": 48.259871820919216, "sps": 38.49814091540442, "score": 330.0, "error": 0}
+
+
+## STDERR ##
+
+
+
+## RESULT ##
+
+Example10,135,330.0,48.259871820919216,0,4252575383910442738,2023-02-10T04:21:18.658839
