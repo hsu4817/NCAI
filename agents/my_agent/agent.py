@@ -9,12 +9,42 @@ from ExampleAgent import ExampleAgent
 
 INF = 987654321
 
+BLACK = 0
+RED	= 1
+GREEN = 2
+BROWN =	3
+BLUE = 4
+MAGENTA = 5
+CYAN = 6
+GRAY = 7
+NO_COLOR = 8
+ORANGE = 9
+BRIGHT_GREEN = 10
+YELLOW = 11
+BRIGHT_BLUE = 12
+BRIGHT_MAGENTA = 13
+BRIGHT_CYAN = 14
+WHITE = 15
+MAX = 16
+
+passive_mobs = set([('b', GREEN), ('j', GREEN), ('F', GREEN), ('R', BROWN), ('b', CYAN), ('e', BLUE), ('j', BLUE), ('F', BROWN), ('F', YELLOW), ('F', RED), ('v', YELLOW), ('E', YELLOW), ('v', BRIGHT_BLUE)])
+
 wall_set = set(['|','-'])
 walkable_objects = set(['.','#','<','>','+','@','$','^',')','[','%','?','/','=','!','(','"','*',])
 
 log = open("log.txt", "w")
-    
-def is_monster(letter):
+output = open("output.txt", "w")
+
+def printf(string, end = '\n'):
+    output.write(string + end)
+
+def is_valid(y, x):
+    return (0 <= y < 21) and (0 <= x < 79) 
+
+def is_monster(letter, color):
+    #Deal passive mob as not monster
+    if (chr(letter), color) in passive_mobs:
+        return False
     if letter >= 65 and letter <= 90:
         return True
     elif letter >= 97 and letter <= 122:
@@ -26,10 +56,11 @@ def is_monster(letter):
 
 def is_enemy(original_map, color_map, pos):
     letter = original_map[pos[1]][pos[0]]
+    color = color_map[pos[1]][pos[0]]
     if color_map[pos[1]][pos[0]] == 15:
         return False
     else:
-        return is_monster(letter)
+        return is_monster(letter, color)
             
 def find_closest_enemy(obs, pos):
     original_map = obs['chars']
@@ -47,16 +78,6 @@ def find_closest_enemy(obs, pos):
     enemy_dist = [abs(i - pos[0]) + abs(j - pos[1]) for (i, j) in enemy_pos_list] ## L1 dist
     min_dist = min(enemy_dist)
     return enemy_pos_list[enemy_dist.index(min_dist)], min_dist
-    
-
-def is_walkable(original_map, pos):
-    letter = original_map[pos[1]][pos[0]]
-    if chr(letter) in walkable_objects:
-        return True
-    elif is_monster(letter):
-        return True
-    else:
-        return False
 
 def move_dir_to_action(dir):
     if dir[0] == 1:
@@ -81,16 +102,6 @@ def move_dir_to_action(dir):
         elif dir[1] == 1:
             return 7
     return 19
-            
-def is_diagonal_error(screen):
-    for line in screen:
-        interp = ''
-        for letter in line:
-            interp += chr(letter)
-
-            if 'diagonally' in interp:
-                return True
-    return False
 
 def find_in_message(screen, str):
     for i in range(22):
@@ -110,6 +121,7 @@ def manhattan_distance(pos1, pos2):
 class Floor():
     def __init__(self):
         self.room = []
+        self.cur_room = None
         self.corridor = []
         self.interesting = []
         
@@ -119,6 +131,7 @@ class Floor():
         self.visited = [[False for _ in range(79)] for _ in range(21)]
         self.occ_map = [[1/(21*79) for _ in range(79)] for _ in range(21)]
         self.search_number = [[0 for _ in range(79)] for _ in range(21)]
+        self.walls = [[False for _ in range(79)] for _ in range(21)]
         self.search_completed = False
         self.goal = None
         self.search_pos = None
@@ -149,6 +162,7 @@ class Floor():
         
         pre_map = self.preprocess_map(obs)
         self.calculate_occupancy_map(obs, pre_map, (x,y))
+
         self.visited[y][x] = True
 
         if self.children[y][x] == None:
@@ -251,6 +265,7 @@ class Floor():
         chars = obs['chars']
         colors = obs['colors']
 
+
         for y in range(21):
             pre_line = []
             for x in range(79):
@@ -262,19 +277,65 @@ class Floor():
                     pre_char = False
                 elif char in door_or_wall and color == 7:
                     pre_char = False
+                    self.walls[y][x] = True
                 elif char == ord('#') and color == 6:
                     pre_char = False
                 elif char == ord('>'):
                     self.goal = (x, y)
- 
+                elif char == ord('%'):
+                    if obs['blstats'][21] > 0:
+                        self.interesting.append((y, x))
+
                 if pre_char:
                     for i in (0,2,1,3):
-                        if chars[y + self.dxy[i][0]][x + self.dxy[i][1]] == ord(' '):
-                            self.interesting.append((y,x))
-                            break
-
+                        ny, nx = y + self.dxy[i][0], x + self.dxy[i][1]
+                        if not is_valid(ny, nx): continue
+                        if chars[ny][nx] == ord(' '):
+                            if not self.visited[y][x]:
+                                self.interesting.append((y, x))
+                                break
                 pre_line.append(pre_char)
             pre.append(pre_line)
+
+        cx, cy = obs['blstats'][:2]
+        for i in range(8):
+            ny, nx = cy + self.dxy[i][0], cx + self.dxy[i][1]
+            if not is_valid(ny, nx):continue
+            if chars[ny][nx] == ord('#'):
+                self.in_room = False
+
+        if self.in_room:
+            borders = []
+
+            for i in range(4):
+                y, x = cy, cx
+                while is_valid(y, x):
+                    if not pre[y][x]: break
+                    ny, nx = y + self.dxy[i][0], x + self.dxy[i][1]
+                    if self.walls[ny][nx]:
+                        break
+                    elif self.walls[ny + self.dxy[(i + 1) % 4][0]][nx + self.dxy[(i + 1) % 4][1]] \
+                        and self.walls[ny + self.dxy[(i - 1) % 4][0]][nx + self.dxy[(i - 1) % 4][1]]:
+                        break
+                    else:
+                        y, x = ny, nx
+                if pre[y][x]:
+                    borders.append((ny, nx))
+
+            if len(borders) == 4:
+                c1 = (borders[0][0], borders[3][1])
+                c2 = (borders[2][0], borders[1][1])
+                room_corners = [c1, c2]
+                cur_room = None
+                for i in range(len(self.room)):
+                    if self.room[i] == room_corners:
+                        cur_room = i
+                        self.cur_room = cur_room
+                if cur_room == None:
+                    self.cur_room = len(self.room)
+                    self.room.append(room_corners)
+                    printf(("Entered to room %d " + str(room_corners)) % self.cur_room)
+
         return pre
     
     def navigate(self, obs, now_pos, target_pos):
@@ -424,7 +485,6 @@ class Agent(ExampleAgent):
         if time == 1 and self.last_time != 1:
             self.reset()
         self.last_time = time
-        #sleep(0.025)
         x, y = obs['blstats'][:2]
         screen = obs['tty_chars']
         original_map = obs['chars']
@@ -479,21 +539,42 @@ class Agent(ExampleAgent):
                 self.action_list.append(8)
         elif find_in_message(screen, 'diagonally'):
             action_list = []
+            original_map = obs['chars']
+            
+            east = original_map[y][x+1]
+            west = original_map[y][x-1]
+
+            rev = False
             if self.last_action == 5:
                 action_list = [1,2]
+                rev = east in [ord('.'), ord('#')]
             elif self.last_action == 6:
                 action_list = [3,2]
+                rev = east in [ord('.'), ord('#')]
             elif self.last_action == 7:
                 action_list = [3,4]
+                rev = west in [ord('.'), ord('#')]
             elif self.last_action == 8:
                 action_list = [1,4]
-            if original_map[y][x] == ord('|'):
-                action_list.reverse()
-            ny = y + current_floor.dxy[self.last_action - 1][0]
-            nx = x + current_floor.dxy[self.last_action - 1][1]
-            if original_map[ny][nx] == ord('-'):
-                action_list.reverse()
+                rev = west in [ord('.'), ord('#')]
+            if rev: action_list.reverse()
             self.action_list += action_list
+        elif find_in_message(screen, 'What'):
+            dialog = ''
+            copy = False
+            for i in range(22):
+                line = screen[i]
+                interp = ''
+                for letter in line:
+                    interp += chr(letter)
+                    if letter == ord('['): copy = True
+                    if letter == ord(']'): copy = False
+                    if copy : dialog += chr(letter)
+            
+            choices = dialog.split('or')[0]
+            choices = choices[1:-1]
+            sleep(1)
+            self.action_list.append(choices[0])
         elif not self.combat_agent.battle and min_dist is not None and min_dist < 4:# get into battle
             self.action_list += self.combat_agent.start_battle(env, obs, current_floor, closest_enemy_pos)
         elif self.combat_agent.battle:                                              # keep battle
@@ -504,7 +585,7 @@ class Agent(ExampleAgent):
         elif obs['blstats'][21] > 1 and self.orange_count > 0:                     # eat orange
             self.action_list += [4, 21]
             self.orange_count -= 1
-        elif obs['blstats'][21] > 1 and find_in_message(screen, "corpse"):
+        elif obs['blstats'][21] > 0 and find_in_message(screen, "corpse"):
             self.action_list += [8, 21]
         elif (current_floor.search_completed == False):
             search_ans = current_floor.search(env, obs)
