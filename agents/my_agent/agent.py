@@ -132,6 +132,7 @@ class Floor():
         self.occ_map = [[1/(21*79) for _ in range(79)] for _ in range(21)]
         self.search_number = [[0 for _ in range(79)] for _ in range(21)]
         self.walls = [[False for _ in range(79)] for _ in range(21)]
+        self.stuck_boulders = [[[] for _ in range(79)] for _ in range(21)]
         self.search_completed = False
         self.goal = None
         self.search_pos = None
@@ -259,12 +260,13 @@ class Floor():
         pre = []
         self.interesting = []
         available = [ord('.'), ord('#')]
-        unavailable = [ord(' '), ord('`')]
+        unavailable = [ord(' '), ord('@')]
         door_or_wall = [ord('|'), ord('-')]
+        
 
         chars = obs['chars']
         colors = obs['colors']
-
+        cx, cy = obs['blstats'][:2]
 
         for y in range(21):
             pre_line = []
@@ -275,13 +277,22 @@ class Floor():
                 pre_char = True
                 if char in unavailable:
                     pre_char = False
-                elif char in door_or_wall and color == 7:
+                elif char in door_or_wall and color == GRAY:
                     pre_char = False
                     self.walls[y][x] = True
-                elif char == ord('#') and color == 6:
+                elif char == ord('#') and color == CYAN:
                     pre_char = False
                 elif char == ord('>'):
                     self.goal = (x, y)
+                elif char == ord('`'):
+                    dy, dx = y - cy, x - cx
+                    if abs(dy) + abs(dx) <= 1 \
+                        and not (dy, dx) in self.stuck_boulders[y + dy][x + dx] \
+                        and ((chars[y + dy][x + dx] == ord(' ')) or (chars[y + dy][x + dx] == ord('#') and colors[y + dy][x + dx] == GRAY)):
+                        pre_char = True
+                    else:
+                        pre_char = False
+
                 elif char == ord('%'):
                     if obs['blstats'][21] > 0:
                         self.interesting.append((y, x))
@@ -297,7 +308,6 @@ class Floor():
                 pre_line.append(pre_char)
             pre.append(pre_line)
 
-        cx, cy = obs['blstats'][:2]
         for i in range(8):
             ny, nx = cy + self.dxy[i][0], cx + self.dxy[i][1]
             if not is_valid(ny, nx):continue
@@ -338,6 +348,11 @@ class Floor():
 
         return pre
     
+    def stuck(self, pos, action):
+        y, x = pos[0], pos[1]
+        dy, dx = self.dxy[action - 1][0], self.dxy[action - 1][1]
+        self.stuck_boulders[y + dy][x + dx].append(self.dxy[action - 1])
+
     def navigate(self, obs, now_pos, target_pos):
         pre_map = self.preprocess_map(obs)
         # use A*
@@ -455,6 +470,7 @@ class Agent(ExampleAgent):
         self.last_action = None
         self.orange_count = 5
         self.last_time = 0
+        self.wait_cnt = 0
 
         self.env = gym.make(
                 FLAGS.env,
@@ -501,7 +517,11 @@ class Agent(ExampleAgent):
         closest_enemy_pos, min_dist = find_closest_enemy(obs, (x, y))
         if self.combat_agent.battle and closest_enemy_pos is None:
             self.combat_agent.end_battle(obs, (x, y))
-            
+        
+        if self.wait_cnt > 0:
+            sleep(1)
+            self.wait_cnt -= 1
+
         #actions
         if find_in_message(screen, 'More'):
             self.action_list.append(0)
@@ -541,22 +561,22 @@ class Agent(ExampleAgent):
             action_list = []
             original_map = obs['chars']
             
-            east = original_map[y][x+1]
-            west = original_map[y][x-1]
+            north = original_map[y-1][x]
+            south = original_map[y+1][x]
 
             rev = False
             if self.last_action == 5:
                 action_list = [1,2]
-                rev = east in [ord('.'), ord('#')]
+                rev = north in [ord('-'), ord('|'), ord("`")]
             elif self.last_action == 6:
                 action_list = [3,2]
-                rev = east in [ord('.'), ord('#')]
+                rev = south in [ord('-'), ord('|'), ord("`")]
             elif self.last_action == 7:
                 action_list = [3,4]
-                rev = west in [ord('.'), ord('#')]
+                rev = south in [ord('-'), ord('|'), ord("`")]
             elif self.last_action == 8:
                 action_list = [1,4]
-                rev = west in [ord('.'), ord('#')]
+                rev = north in [ord('-'), ord('|'), ord("`")]
             if rev: action_list.reverse()
             self.action_list += action_list
         elif find_in_message(screen, 'What'):
@@ -574,7 +594,12 @@ class Agent(ExampleAgent):
             choices = dialog.split('or')[0]
             choices = choices[1:-1]
             sleep(1)
+            self.wait_cnt += 1
+            self.action_list.append(4)
+        elif find_in_message(screen, 'Call'):
             self.action_list.append(0)
+        elif find_in_message(screen, 'You try to move'):
+            current_floor.stuck((y, x), self.last_action)
         elif not self.combat_agent.battle and min_dist is not None and min_dist < 4:# get into battle
             self.action_list += self.combat_agent.start_battle(env, obs, current_floor, closest_enemy_pos)
         elif self.combat_agent.battle:                                              # keep battle
@@ -585,7 +610,7 @@ class Agent(ExampleAgent):
         elif obs['blstats'][21] > 1 and self.orange_count > 0:                     # eat orange
             self.action_list += [4, 21]
             self.orange_count -= 1
-        elif obs['blstats'][21] > 0 and find_in_message(screen, "corpse"):
+        elif obs['blstats'][21] > 0 and find_in_message(screen, "corpse") and find_in_message(screen, "here"):
             self.action_list += [8, 21]
         elif (current_floor.search_completed == False):
             search_ans = current_floor.search(env, obs)
