@@ -574,7 +574,7 @@ class Agent(ExampleAgent):
             choices = dialog.split('or')[0]
             choices = choices[1:-1]
             sleep(1)
-            self.action_list.append(choices[0])
+            self.action_list.append(0)
         elif not self.combat_agent.battle and min_dist is not None and min_dist < 4:# get into battle
             self.action_list += self.combat_agent.start_battle(env, obs, current_floor, closest_enemy_pos)
         elif self.combat_agent.battle:                                              # keep battle
