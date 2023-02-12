@@ -27,6 +27,8 @@ BRIGHT_CYAN = 14
 WHITE = 15
 MAX = 16
 
+EAT = 1
+
 passive_mobs = set([('b', GREEN), ('j', GREEN), ('F', GREEN), ('R', BROWN), ('b', CYAN), ('e', BLUE), ('j', BLUE), ('F', BROWN), ('F', YELLOW), ('F', RED), ('v', YELLOW), ('E', YELLOW), ('v', BRIGHT_BLUE)])
 
 wall_set = set(['|','-'])
@@ -132,6 +134,8 @@ class Floor():
         self.occ_map = [[1/(21*79) for _ in range(79)] for _ in range(21)]
         self.search_number = [[0 for _ in range(79)] for _ in range(21)]
         self.walls = [[False for _ in range(79)] for _ in range(21)]
+        self.comestibles = []
+        self.rotten = []
         self.stuck_boulders = []
         self.search_completed = False
         self.goal = None
@@ -289,6 +293,8 @@ class Floor():
                 elif char == ord('%'):
                     if obs['blstats'][21] > 0:
                         self.interesting.append((y, x))
+                    if not (y, x) in self.comestibles:
+                        self.comestibles.append((y, x))
                 elif char == ord('`') and (y, x) in self.stuck_boulders:
                     pre_char = False
 
@@ -312,6 +318,13 @@ class Floor():
 
             if not pre[cy + self.dxy[left][0]][cx + self.dxy[left][1]] and not pre[cy + self.dxy[right][0]][cx + self.dxy[right][1]]:
                 pre[cy + self.dxy[i][0]][cx + self.dxy[i][1]] = False            
+
+        # Check comestibles 
+        for (y, x) in self.comestibles:
+            if chars[y][x] != ord('%'):
+                self.comestibles.remove((y, x))
+            elif (y, x) in self.rotten:
+                self.comestibles.remove((y, x))
 
         for i in range(8):
             ny, nx = cy + self.dxy[i][0], cx + self.dxy[i][1]
@@ -486,6 +499,7 @@ class Agent(ExampleAgent):
         self.last_time = 0
         self.wait_cnt = 0
         self.moved = False
+        self.ynraise = 0
 
         self.env = gym.make(
                 FLAGS.env,
@@ -543,8 +557,24 @@ class Agent(ExampleAgent):
         #actions
         if find_in_message(screen, 'More'):
             self.action_list.append(0)
-        elif find_in_message(screen, '[yn]'):
-            self.action_list.append(8)
+        elif find_in_message(screen, '[yn]') or find_in_message(screen, '[ynq]'):
+            if self.ynraise == 0:
+                self.action_list.append(8)
+            else:
+                if self.ynraise == EAT:
+                    sleep(1)
+                    if find_in_message(screen, 'to eat'):
+                        self.action_list.append(6)
+                        current_floor.rotten.append((y, x))
+                        current_floor.comestibles.remove((y, x))
+                    else:
+                        self.action_list.append(8)
+                        if (y, x) in current_floor.comestibles:
+                            current_floor.comestibles.remove((y, x))
+                else :
+                    self.action_list.append(8)
+                self.ynraise = 0
+
         elif find_in_message(screen, 'locked'):
             self.action_list.append(20)
         elif find_in_message(screen, 'direction?'):
@@ -631,7 +661,11 @@ class Agent(ExampleAgent):
             self.action_list += [4, 21]
             self.orange_count -= 1
         elif obs['blstats'][21] > 0 and find_in_message(screen, "corpse") and find_in_message(screen, "here"):
-            self.action_list += [8, 21]
+            self.action_list += [21]
+            self.ynraise = EAT
+        elif obs['blstats'][21] > 0 and (y, x) in current_floor.comestibles:
+            self.action_list += [21]
+            self.ynraise = EAT
 
         elif (current_floor.search_completed == False):                             # basic searching
             search_ans = current_floor.search(env, obs)
