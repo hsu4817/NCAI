@@ -13,7 +13,9 @@ import seaborn as sns
 
 from . import config
 
+
 logger = logging.getLogger(__name__)
+
 
 def export_results(config):
     df = pd.read_csv(config.out_file, names=config.csv_columns)
@@ -40,23 +42,69 @@ def export_results(config):
     df_play_time = df[["agent", "play_time"]].groupby("agent")
     mean_play_time = df_play_time.mean()
 
-    #mean score bar graph
+    #
+    # 에러률
+    #
+    df_error = df[["agent", "error"]].groupby("agent")
+    error_ratio = df_error.mean()
+
+    # mean score bar graph
     names = mean_score.index.to_list()
-    plt.bar(np.arange(len(names)), mean_score["score"].to_list())
-    plt.xticks(np.arange(len(names)), names)
-    plt.savefig(config.fig_dir / "mean_score.png")
+    sorted_names = [names[i] for i in np.argsort(-np.array(mean_score["score"]))]
+
+    # sns.set_theme(style="ticks")
+    matplotlib.rc("font", family="NanumMyeongjo")
+    # matplotlib.rc("font", family="NanumMyeongjo")
+    # plt.rcParams["font.family"] = "NanumGothic"
+    # 폰트 설치
+    #   sudo apt-get install fonts-nanum*
+    # 폰트 캐시삭제:
+    #   rm -rf ~/.cache/matplotlib/*
+    # 확인:
+    #   import matplotlib.font_manager
+    #   print([f.fname for f in matplotlib.font_manager.fontManager.ttflist])
+    # matplotlib.rc('font', family="Noto Sans Mono CJK KR")  # sudo apt install  fonts-noto-cjk
+    # matplotlib.font_manager._rebuild()
+    FIG_SIZE = (10, 6)
+
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.barplot(
+        x="score", y="agent", data=df, order=sorted_names, errorbar=None, palette="vlag"
+    )
+    for p in ax.patches:
+        h, w, x, y = p.get_height(), p.get_width(), p.get_x(), p.get_y()
+        xy = (w / 2, y + h / 2.0)
+        # text = f"Mean:\n{h:0.2f}"
+        text = f"{w:0.2f}"
+        ax.annotate(text=text, xy=xy, ha="center", va="center")
+    plt.savefig(config.fig_dir / "mean_score.png", bbox_inches="tight")
     plt.clf()
 
-    #median score bar graph
-    plt.bar(np.arange(len(names)), median_score["score"].to_list())
-    plt.xticks(np.arange(len(names)), names)
-    plt.savefig(config.fig_dir / "median_score.png")
+    # median score bar graph
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.boxplot(x="score", y="agent", data=df, order=sorted_names, palette="vlag")
+    sns.stripplot(x="score", y="agent", data=df, order=sorted_names, color=".3")
+    plt.savefig(config.fig_dir / "median_score.png", bbox_inches="tight")
     plt.clf()
 
-    #mean play time bar graph
-    plt.bar(np.arange(len(names)), mean_play_time["play_time"].to_list())
-    plt.xticks(np.arange(len(names)), names)
-    plt.savefig(config.fig_dir / "mean_play_time.png")
+    # mean play time bar graph
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.boxplot(x="play_time", y="agent", data=df, order=sorted_names, palette="vlag")
+    sns.stripplot(x="play_time", y="agent", data=df, order=sorted_names, color=".3")
+    plt.savefig(config.fig_dir / "mean_play_time.png", bbox_inches="tight")
+    plt.clf()
+
+    # 에러율
+    f, ax = plt.subplots(figsize=FIG_SIZE)
+    sns.barplot(
+        x="error", y="agent", data=df, order=sorted_names, errorbar=None, palette="vlag"
+    )
+    for p in ax.patches:
+        h, w, x, y = p.get_height(), p.get_width(), p.get_x(), p.get_y()
+        xy = (w / 2, y + h / 2.0)
+        text = f"{w:0.2f}"
+        ax.annotate(text=text, xy=xy, ha="left", va="center")
+    plt.savefig(config.fig_dir / "error_ratio.png", bbox_inches="tight")
     plt.clf()
 
     #
@@ -66,11 +114,12 @@ def export_results(config):
         "mean score": mean_score,
         "median score": median_score,
         "play time": mean_play_time,
+        "error ratio": error_ratio,
     }
     summary = pd.concat(kv.values(), axis=1, sort=True)
     summary.index.name = "agent"
     summary.columns = kv.keys()
-    summary = summary.sort_values(by="median score", ascending=False)
+    summary = summary.sort_values(by="mean score", ascending=False)
 
     summary.to_csv(config.summary_dir / "summary.csv")
 
@@ -79,9 +128,10 @@ def export_results(config):
     #
     write_readme(config, run_start, run_end)
 
+
 def write_readme(config, run_start, run_end):
     def csv_to_table(filename):
-        buff = f"""
+        buff = """
 .. list-table::
    :header-rows: 1
 
@@ -129,23 +179,29 @@ NCF2022 결과
 - median score: 점수의 중간값
 - play time: 평균 게임 플레이 시간
 
-**Mean Score**
+**평균 점수**
 
 .. figure:: fig/mean_score.png
    :figwidth: 200
 
-**Median Score**
+**점수 분포**
 
 .. figure:: fig/median_score.png
    :figwidth: 200
 
-**Mean Play Time**
+**플레이 시간 분포**
 
 .. figure:: fig/mean_play_time.png
    :figwidth: 200
 
+**에러율**
+
+.. figure:: fig/error_ratio.png
+   :figwidth: 200
+
 """
         f.write(content)
+
 
 if __name__ == "__main__":
     export_results(config)

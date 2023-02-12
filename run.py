@@ -19,7 +19,7 @@ def dummy_context():
     yield None
 
 def play():
-    module = FLAGS.run + ".agent"
+    module = f"{FLAGS.run}.agent"
     name = "Agent"
     agent = getattr(importlib.import_module(module), name)(FLAGS)
     if FLAGS.mode == 'train':
@@ -92,9 +92,8 @@ def main():
 
     with cm():
         if FLAGS.savedir == "args":
-            FLAGS.savedir = "{}_{}_{}.zip".format(
-                time.strftime("%Y%m%d-%H%M%S"), FLAGS.mode, FLAGS.env
-            )
+            FLAGS.savedir = f'{time.strftime("%Y%m%d-%H%M%S")}_{FLAGS.mode}_{FLAGS.env}.zip'
+
         elif FLAGS.savedir == "None":
             FLAGS.savedir = None  # Not saving any ttyrecs.
 
