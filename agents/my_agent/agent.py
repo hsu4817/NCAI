@@ -132,7 +132,7 @@ class Floor():
         self.occ_map = [[1/(21*79) for _ in range(79)] for _ in range(21)]
         self.search_number = [[0 for _ in range(79)] for _ in range(21)]
         self.walls = [[False for _ in range(79)] for _ in range(21)]
-        self.stuck_boulders = [[False for _ in range(79)] for _ in range(21)]
+        self.stuck_boulders = []
         self.search_completed = False
         self.goal = None
         self.search_pos = None
@@ -159,6 +159,7 @@ class Floor():
                 return [action]
         else:
             self.frozen_cnt = 0
+        
         self.last_pos = (x, y)
         
         pre_map = self.preprocess_map(obs)
@@ -251,7 +252,7 @@ class Floor():
         #더 이상 탐색할 곳이 없다면 계단 올라가기
         if action == None:
             self.search_completed = True
-            action = 17
+            action = 19
 
         return [action]
     
@@ -259,10 +260,9 @@ class Floor():
         pre = []
         self.interesting = []
         available = [ord('.'), ord('#')]
-        unavailable = [ord(' '), ord('@')]
+        unavailable = [ord(' '), ord('@'), ord('^'), ord('"')]
         door_or_wall = [ord('|'), ord('-')]
         
-
         chars = obs['chars']
         colors = obs['colors']
         cx, cy = obs['blstats'][:2]
@@ -282,14 +282,17 @@ class Floor():
                 elif char == ord('#') and color == CYAN:
                     pre_char = False
                 elif char == ord('>'):
+                    if self.goal == None:
+                        printf('found goal')
                     self.goal = (x, y)
+                    
                 elif char == ord('%'):
                     if obs['blstats'][21] > 0:
                         self.interesting.append((y, x))
-                if self.stuck_boulders[y][x]:
+                elif char == ord('`') and (y, x) in self.stuck_boulders:
                     pre_char = False
 
-                if (char in available) or (char in door_or_wall and color != GRAY):
+                if (char in available) or (char in door_or_wall and color != GRAY):                 # Check unlightened area as interesting
                     for i in (0,2,1,3):
                         ny, nx = y + self.dxy[i][0], x + self.dxy[i][1]
                         if not is_valid(ny, nx): continue
@@ -304,6 +307,9 @@ class Floor():
         for i in range(4,8):
             left = i - 4
             right = (i - 3) % 4
+            if not is_valid(cy + self.dxy[i][0], cx + self.dxy[i][1]):
+                continue
+
             if not pre[cy + self.dxy[left][0]][cx + self.dxy[left][1]] and not pre[cy + self.dxy[right][0]][cx + self.dxy[right][1]]:
                 pre[cy + self.dxy[i][0]][cx + self.dxy[i][1]] = False            
 
@@ -347,10 +353,19 @@ class Floor():
 
         return pre
     
-    def stuck(self, pos, action):
+    def stuck(self, pos, action, obs):
         y, x = pos[0], pos[1]
         dy, dx = self.dxy[action - 1][0], self.dxy[action - 1][1]
-        self.stuck_boulders[y + dy][x + dx] = True
+        target = obs['chars'][y + dy][x + dx]
+        if target == ord('`'):
+            printf("stuck by boulder")
+            self.stuck_boulders.append((y + dy, x + dx))
+
+            for i in range(8):
+                if (dy, dx) == self.dxy[i]:
+                    self.children[y][x][i] = False
+                    self.parent[y + dy][x + dx] = None
+                    break
 
     def navigate(self, obs, now_pos, target_pos):
         pre_map = self.preprocess_map(obs)
@@ -522,6 +537,9 @@ class Agent(ExampleAgent):
             sleep(1)
             self.wait_cnt -= 1
 
+        if current_floor.last_pos == (x, y) and self.moved:                       # move failed because of boulder or something
+            current_floor.stuck((y, x), self.last_action, obs)
+
         #actions
         if find_in_message(screen, 'More'):
             self.action_list.append(0)
@@ -601,20 +619,11 @@ class Agent(ExampleAgent):
             
         elif find_in_message(screen, 'Call'):
             self.action_list.append(0)
-        elif current_floor.last_pos == (x, y) and self.moved:                       # cannot move because of boulder or something
-            current_floor.stuck((y, x), self.last_action)
-            search_ans = current_floor.search(env, obs)
-            if search_ans is None:
-                print("search_ans ERROR!")
-            self.action_list += search_ans
-            print(self.last_action)
-            print(search_ans)
-            next = input()
-
         elif not self.combat_agent.battle and min_dist is not None and min_dist < 4:# get into battle
             self.action_list += self.combat_agent.start_battle(env, obs, current_floor, closest_enemy_pos)
         elif self.combat_agent.battle:                                              # keep battle
             self.action_list += self.combat_agent.get_action(env, obs, current_floor, closest_enemy_pos)
+
         elif self.action_list:                                                      # solve continuations
             self.last_action = self.action_list.pop()
             return self.last_action
@@ -623,7 +632,8 @@ class Agent(ExampleAgent):
             self.orange_count -= 1
         elif obs['blstats'][21] > 0 and find_in_message(screen, "corpse") and find_in_message(screen, "here"):
             self.action_list += [8, 21]
-        elif (current_floor.search_completed == False):
+
+        elif (current_floor.search_completed == False):                             # basic searching
             search_ans = current_floor.search(env, obs)
             if search_ans is None:
                 print("search_ans ERROR!")
